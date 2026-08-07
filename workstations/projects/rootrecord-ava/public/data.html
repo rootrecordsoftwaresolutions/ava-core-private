@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Data & logs · Ava wiki · Root Record</title>
+  <meta name="description" content="Ava Ivy — core runtime wiki for RootMC and Root Record." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Syne:wght@600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="assets/wiki.css" />
+</head>
+<body>
+  <div class="wrap">
+    <nav class="top">
+  <a class="brand" href="index.html">Ava · wiki</a>
+  <div class="links"><a href="index.html">Wiki</a><a href="core.html">Core</a><a href="surfaces.html">Surfaces</a><a href="rootmc.html">RootMC</a><a href="root-record.html">Root Record</a><a href="brains.html">Brains</a><a href="data.html" class="active">Data</a><a href="crons.html">Crons</a><a href="hosting.html">Hosting</a><a href="glossary.html">Glossary</a><a href="status/" class="live">Live status</a></div>
+</nav>
+    
+    
+            <section class="block">
+              <h2>Memory layout</h2>
+              <table>
+                <tr><th>Store</th><th>What</th></tr>
+                <tr><td><code>data/logs/*.jsonl</code></td><td>inbound · outbound · actions · host-audit</td></tr>
+                <tr><td><code>data/training/*.jsonl</code></td><td>utterances · digs · lessons · RCON · dream · free-cloud</td></tr>
+                <tr><td><code>data/flight/</code></td><td>ops-snapshot · brain-events · patches</td></tr>
+                <tr><td>MariaDB</td><td>Full RootMC + Root Record product state + <code>ava_cron</code></td></tr>
+                <tr><td>SQLite mirrors</td><td><code>local-api/data/*.sqlite</code> from D1 export</td></tr>
+              </table>
+              <p class="lead">Secrets are scrubbed in conversation logs. Ops logging (cron/API) is the next hardening pass.</p>
+            </section>
+            
+    <footer>
+      Ava is the core runtime for RootMC + Root Record.
+      Canonical wiki: <a href="https://rootrecord.info/ava/">rootrecord.info/ava</a>
+      · Live board: <a href="https://rootrecord.info/ava/status">/ava/status</a>
+      · Legacy alias: <a href="https://ava.rootmc.net/">ava.rootmc.net</a>
+    </footer>
+  </div>
+  <div id="powered-by-ava" class="powered-by-ava" data-powered-by-ava="1"></div>
+  <script src="https://rootrecord.info/ava/assets/powered-by-ava.js" defer></script>
+</body>
+</html>

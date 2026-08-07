@@ -1,0 +1,16 @@
+name = "rootrecord-merged"
+main = "src/worker.js"
+compatibility_date = "2026-08-05"
+workers_dev = true
+account_id = "2b317e91da019f4fdb854e3b8e26fa94"
+
+routes = [
+  { pattern = "merged.rootrecord.info", zone_name = "rootrecord.info" },
+  { pattern = "merged.rootrecord.info/*", zone_name = "rootrecord.info" }
+]
+
+[assets]
+directory = "./public"
+binding = "ASSETS"
+html_handling = "none"
+not_found_handling = "single-page-application"

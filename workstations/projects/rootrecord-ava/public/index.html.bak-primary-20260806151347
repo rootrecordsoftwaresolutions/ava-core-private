@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Ava · Ava wiki · Root Record</title>
+  <meta name="description" content="Ava Ivy — core runtime wiki for RootMC and Root Record." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Syne:wght@600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="assets/wiki.css" />
+</head>
+<body>
+  <div class="wrap">
+    <nav class="top">
+  <a class="brand" href="index.html">Ava · wiki</a>
+  <div class="links"><a href="index.html" class="active">Wiki</a><a href="context">Core context (AI)</a></li><li><a href="core.html">Core</a><a href="surfaces.html">Surfaces</a><a href="rootmc.html">RootMC</a><a href="root-record.html">Root Record</a><a href="brains.html">Brains</a><a href="data.html">Data</a><a href="crons.html">Crons</a><a href="hosting.html">Hosting</a><a href="glossary.html">Glossary</a><a href="status/" class="live">Live status</a></div>
+</nav>
+    
+    <header class="hero">
+      <p class="eyebrow">Root Record · Ava-core</p>
+      <h1>Ava</h1>
+      <p>Everything she touches — host, brains, RootMC, Root Record, crons, data, tunnels, and the live board. This wiki is the map; <strong>/ava/status</strong> is the pulse.</p>
+      <div class="cta">
+        <a class="btn primary" href="status/">Open live status</a>
+        <a class="btn" href="core.html">Core runtime</a>
+        <a class="btn" href="glossary.html">Glossary</a>
+      </div>
+    </header>
+    
+    
+    <section class="block">
+      <h2>Atlas</h2>
+      <p class="lead">One composition per concern. Start here, then go deep.</p>
+      <div class="grid">
+        <a class="card" href="core.html"><h2>Core</h2><p>OptiPlex ava-core, Node runtime, local-api, MariaDB, Ollama.</p><span class="tag">host</span></a>
+        <a class="card" href="surfaces.html"><h2>Surfaces</h2><p>Discord · Slack · Telegram · in-game · HTTP.</p><span class="tag">voice</span></a>
+        <a class="card" href="rootmc.html"><h2>RootMC</h2><p>Claims/Towny, Gold, RCON digs, proposals, APIs.</p><span class="tag">game</span></a>
+        <a class="card" href="root-record.html"><h2>Root Record</h2><p>Account, weather, Kīlauea, Solana, product crons.</p><span class="tag">apps</span></a>
+        <a class="card" href="brains.html"><h2>Brains</h2><p>Llama organizer, Cursor digs, dream Discord, free-cloud.</p><span class="tag">mind</span></a>
+        <a class="card" href="data.html"><h2>Data</h2><p>Flight recorder, training JSONL, D1 → MariaDB.</p><span class="tag">memory</span></a>
+        <a class="card" href="crons.html"><h2>Crons</h2><p>Ava cronRunner owns schedules; Workers soft-ack.</p><span class="tag">time</span></a>
+        <a class="card" href="hosting.html"><h2>Hosting</h2><p>CF Pages + DNS + tunnel; Ava is system of record.</p><span class="tag">edge</span></a>
+                <a class="card" href="https://merged.rootrecord.info/"><h2>The Root</h2><p>Merged homepage — Root Record × RootMC, core by Ava.</p><span class="tag">merge</span></a>
+        <a class="card" href="status/"><h2>Live status</h2><p>Solar, battery, host, weather — the single ops board.</p><span class="tag">now</span></a>
+      </div>
+    </section>
+    <section class="block">
+      <h2>Lock</h2>
+      <p class="lead">She is the core of everything now — RootMC and Root Record.</p>
+      <table>
+        <tr><th>Truth</th><th>Meaning</th></tr>
+        <tr><td>System of record</td><td>MariaDB + SQLite on OptiPlex (<code>rootmc_api</code>, <code>root_record</code>, <code>ava_cron</code>)</td></tr>
+        <tr><td>Schedules</td><td>Ava <code>cronRunner</code> — Cloudflare cron triggers emptied (soft-ack)</td></tr>
+        <tr><td>Public edge</td><td>Cloudflare = static Pages + DNS + tunnel into Ava</td></tr>
+        <tr><td>Wiki home</td><td><code>rootrecord.info/ava</code> — this tree (canonical map)</td></tr>
+        <tr><td>Status home</td><td><code>rootrecord.info/ava/status</code> — primary ops board; legacy <code>ava.rootmc.net</code> for APIs + <code>/solar</code></td></tr>
+        <tr><td>Soft-ack</td><td>CF Worker crons off; Ava owns schedules. API Workers stay up until <strong>~2026-08-13</strong> (no early undeploy).</td></tr>
+      </table>
+    </section>
+    
+    <footer>
+      Ava is the core runtime for RootMC + Root Record.
+      Canonical wiki: <a href="https://rootrecord.info/ava/">rootrecord.info/ava</a>
+      · Live board: <a href="https://rootrecord.info/ava/status">/ava/status</a>
+      · Legacy alias: <a href="https://ava.rootmc.net/">ava.rootmc.net</a>
+    </footer>
+  </div>
+  <div id="powered-by-ava" class="powered-by-ava" data-powered-by-ava="1"></div>
+  <script src="https://rootrecord.info/ava/assets/powered-by-ava.js" defer></script>
+
+    <section class="card" id="context">
+      <h2><a href="/ava/context">Core context (AI pickup)</a></h2>
+      <p>Machine-readable brief for any AI — markdown + JSON. Operator is the <strong>core operator</strong>. GitHub: <a href="https://github.com/Ava-Core-Dev">Ava-Core-Dev</a>.</p>
+      <p><a href="/ava/context">Open context</a> · <a href="/ava/context.md">Markdown</a> · <a href="/ava/context?format=json">JSON</a></p>
+    </section>
+
+</body>
+</html>

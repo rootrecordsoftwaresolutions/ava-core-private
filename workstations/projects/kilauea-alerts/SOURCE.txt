@@ -1,0 +1,5 @@
+Project: kilauea-alerts
+Canonical on OptiPlex SSD: /home/ava-core/ava/workstations/rootmc/Mobile App Files/kilauea-alerts-android
+Pointer: /home/ava-core/ava/workstations/projects/kilauea-alerts/ssd-source
+Current: 1.0.47 — Lava Watchers removed from live feeds.
+Legacy E /mnt/e pointers retired 2026-08-06 — Ava runs without external drive.

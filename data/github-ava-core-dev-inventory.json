@@ -1,0 +1,154 @@
+{
+  "at": "2026-08-06T15:08:35Z",
+  "github": "https://github.com/Ava-Core-Dev",
+  "projects": [
+    {
+      "path": "/home/ava-core/ava/workstations/projects/kilauea-alerts",
+      "suggested_repo": "kilauea-alerts"
+    },
+    {
+      "path": "/home/ava-core/ava/workstations/projects/rootrecord-api-goals",
+      "suggested_repo": "rootrecord-api-goals"
+    },
+    {
+      "path": "/home/ava-core/ava/workstations/projects/rootrecord-api-kilauea",
+      "suggested_repo": "rootrecord-api-kilauea"
+    },
+    {
+      "path": "/home/ava-core/ava/workstations/projects/rootrecord-api-weather",
+      "suggested_repo": "rootrecord-api-weather"
+    },
+    {
+      "path": "/home/ava-core/ava/workstations/projects/rootrecord-ava",
+      "suggested_repo": "rootrecord-ava"
+    },
+    {
+      "path": "/home/ava-core/ava/workstations/projects/rootrecord-merged",
+      "suggested_repo": "rootrecord-merged"
+    },
+    {
+      "path": "/home/ava-core/ava/workstations/projects/rootrecord-primary",
+      "suggested_repo": "rootrecord-primary"
+    },
+    {
+      "path": "/home/ava-core/ava/workstations/projects/rootrecord-site",
+      "suggested_repo": "rootrecord-site"
+    },
+    {
+      "path": "/home/ava-core/ava/workstations/projects/rootrecord-weather",
+      "suggested_repo": "rootrecord-weather"
+    },
+    {
+      "path": "/home/ava-core/ava/workstations/cloudflare/rootrecord-api-account",
+      "suggested_repo": "rootrecord-api-account"
+    },
+    {
+      "path": "/home/ava-core/ava/workstations/cloudflare/rootrecord-api-business",
+      "suggested_repo": "rootrecord-api-business"
+    },
+    {
+      "path": "/home/ava-core/ava/workstations/cloudflare/rootrecord-api-goals",
+      "suggested_repo": "rootrecord-api-goals"
+    },
+    {
+      "path": "/home/ava-core/ava/workstations/cloudflare/rootrecord-api-kilauea",
+      "suggested_repo": "rootrecord-api-kilauea"
+    },
+    {
+      "path": "/home/ava-core/ava/workstations/cloudflare/rootrecord-api-token",
+      "suggested_repo": "rootrecord-api-token"
+    },
+    {
+      "path": "/home/ava-core/ava/workstations/cloudflare/rootrecord-api-weather",
+      "suggested_repo": "rootrecord-api-weather"
+    },
+    {
+      "path": "/home/ava-core/ava/workstations/cloudflare/rootrecord-license",
+      "suggested_repo": "rootrecord-license"
+    },
+    {
+      "path": "/home/ava-core/ava/workstations/cloudflare/rootrecord-minecraft-map",
+      "suggested_repo": "rootrecord-minecraft-map"
+    },
+    {
+      "path": "/home/ava-core/ava/workstations/cloudflare/rootrecord-primary",
+      "suggested_repo": "rootrecord-primary"
+    },
+    {
+      "path": "/home/ava-core/ava/workstations/cloudflare/rootrecord-solana-tx",
+      "suggested_repo": "rootrecord-solana-tx"
+    },
+    {
+      "path": "/home/ava-core/ava/workstations/cloudflare/rr-weather-manager-api",
+      "suggested_repo": "rr-weather-manager-api"
+    },
+    {
+      "path": "/home/ava-core/ava/workstations/cloudflare/scripts",
+      "suggested_repo": "scripts"
+    },
+    {
+      "path": "/home/ava-core/ava/workstations/cloudflare/shared",
+      "suggested_repo": "shared"
+    },
+    {
+      "path": "/home/ava-core/ava/workstations/rootmc/Web Files/_deploy-logs",
+      "suggested_repo": "_deploy-logs"
+    },
+    {
+      "path": "/home/ava-core/ava/workstations/rootmc/Web Files/halted-development",
+      "suggested_repo": "halted-development"
+    },
+    {
+      "path": "/home/ava-core/ava/workstations/rootmc/Web Files/rootmc-api",
+      "suggested_repo": "rootmc-api"
+    },
+    {
+      "path": "/home/ava-core/ava/workstations/rootmc/Web Files/rootmc-api-g2",
+      "suggested_repo": "rootmc-api-g2"
+    },
+    {
+      "path": "/home/ava-core/ava/workstations/rootmc/Web Files/rootmc-app",
+      "suggested_repo": "rootmc-app"
+    },
+    {
+      "path": "/home/ava-core/ava/workstations/rootmc/Web Files/rootmc-ava",
+      "suggested_repo": "rootmc-ava"
+    },
+    {
+      "path": "/home/ava-core/ava/workstations/rootmc/Web Files/rootmc-ava-desktop",
+      "suggested_repo": "rootmc-ava-desktop"
+    },
+    {
+      "path": "/home/ava-core/ava/workstations/rootmc/Web Files/rootmc-ava-edge",
+      "suggested_repo": "rootmc-ava-edge"
+    },
+    {
+      "path": "/home/ava-core/ava/workstations/rootmc/Web Files/rootmc-minecraft-map",
+      "suggested_repo": "rootmc-minecraft-map"
+    },
+    {
+      "path": "/home/ava-core/ava/workstations/rootmc/Web Files/rootmc-realm-api",
+      "suggested_repo": "rootmc-realm-api"
+    },
+    {
+      "path": "/home/ava-core/ava/workstations/rootmc/Web Files/rootmc-sexi",
+      "suggested_repo": "rootmc-sexi"
+    },
+    {
+      "path": "/home/ava-core/ava/workstations/rootmc/Web Files/rootmc-web",
+      "suggested_repo": "rootmc-web"
+    },
+    {
+      "path": "/home/ava-core/ava/workstations/rootmc/Web Files/rootmc-webstat-proxy",
+      "suggested_repo": "rootmc-webstat-proxy"
+    },
+    {
+      "path": "/home/ava-core/ava/workstations/rootmc/Web Files/rootrecord-api-account",
+      "suggested_repo": "rootrecord-api-account"
+    },
+    {
+      "path": "/home/ava-core/ava/workstations/rootmc/Web Files/shared",
+      "suggested_repo": "shared"
+    }
+  ]
+}
