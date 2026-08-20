@@ -80,6 +80,11 @@
           <option value="minimal">Minimal</option>
           <option value="editorial">Editorial</option>
         </select>
+        <label for="wh-css">Custom CSS (developer mode)</label>
+        <textarea id="wh-css" placeholder="Optional — live on your site when developer mode is on"></textarea>
+        <label style="display:inline-flex;align-items:center;gap:0.4rem;margin-top:0.75rem">
+          <input type="checkbox" id="wh-dev"/> Enable developer mode
+        </label>
       </div>
 
       <div class="wh-step" data-step="3">
@@ -185,6 +190,8 @@
     document.getElementById("wh-domain").value = s.customDomain || "";
     const cfg = s.config || {};
     document.getElementById("wh-theme").value = cfg.theme || "default";
+    document.getElementById("wh-css").value = cfg.customCss || "";
+    document.getElementById("wh-dev").checked = Boolean(cfg.developerMode);
     const home = (Array.isArray(cfg.pages) && cfg.pages[0]) || {};
     document.getElementById("wh-home-title").value = home.title || "Home";
     document.getElementById("wh-home-body").value = home.body || "";
@@ -227,6 +234,8 @@
       .filter(Boolean);
     return {
       theme: document.getElementById("wh-theme").value,
+      customCss: document.getElementById("wh-css").value,
+      developerMode: document.getElementById("wh-dev").checked,
       about: document.getElementById("wh-about").value.trim(),
       contact: document.getElementById("wh-contact").value.trim(),
       seoDescription: document.getElementById("wh-seo").value.trim(),

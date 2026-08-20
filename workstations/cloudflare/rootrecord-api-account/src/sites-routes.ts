@@ -108,6 +108,8 @@ function rowToOwner(row: SiteRow, siteUrl: string) {
 
 function rowToPublic(row: SiteRow) {
   const active = siteAccessActive(row);
+  const status = String(row.subscription_status || "").toLowerCase();
+  const paid = status === "active";
   return {
     id: row.id,
     slug: row.slug,
@@ -118,6 +120,11 @@ function rowToPublic(row: SiteRow) {
     trialEndsAt: row.trial_ends_at,
     paywall: !active,
     accessActive: active,
+    /** Free / trial keep attribution; paid removes it. */
+    showBuiltByBanner: !paid,
+    /** Trial CTA to convert. */
+    showBuildYourOwn: status === "trialing",
+    monthlyPriceCents: MONTHLY_CENTS,
   };
 }
 

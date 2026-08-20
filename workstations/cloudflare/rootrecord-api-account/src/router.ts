@@ -29,6 +29,7 @@ import { handleFeedbackRoute } from "./feedback-route";
 import { handlePartnershipSignupRoute } from "./partnership-signup";
 import { handleVisitingHawaiiSponsoredRoutes } from "./visiting-hawaii-sponsored-routes";
 import { handlePublicSitesPath, handleSitesRoutes } from "./sites-routes";
+import { handlePublicContentPath, handleContentRoutes } from "./content-routes";
 import { performAccountDeletion } from "./account-deletion";
 import { handleRewardsLedgerV1 } from "./earn-rewards-ledger";
 import { handleEmailMarketingPrefsRoute } from "./email-marketing-prefs";
@@ -364,6 +365,9 @@ export async function handleRequest(
 
     const publicSitesRes = await handlePublicSitesPath(request, env, pathname, method);
     if (publicSitesRes) return publicSitesRes;
+
+    const publicContentRes = await handlePublicContentPath(request, env, pathname, method);
+    if (publicContentRes) return publicContentRes;
 
     if (method === "GET" && (pathname === "/" || pathname === "/health")) {
 
@@ -1504,6 +1508,10 @@ export async function handleRequest(
   const sitesRes = await handleSitesRoutes(request, env, sub, method);
 
   if (sitesRes) return sitesRes;
+
+  const contentRes = await handleContentRoutes(request, env, sub, method);
+
+  if (contentRes) return contentRes;
 
   const businessRes = await handleBusinessRoutes(request, env, sub, method);
 

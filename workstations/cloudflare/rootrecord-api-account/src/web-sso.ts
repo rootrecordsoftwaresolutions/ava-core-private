@@ -16,6 +16,9 @@ export function allowedWebCredentialOrigin(origin: string | null): string | null
     const host = u.hostname.toLowerCase();
     if (host === "rootrecord.info" || host === "www.rootrecord.info") return o;
     if (host.endsWith(".rootrecord.info")) return o;
+    if (host === "alexrs94.site" || host === "www.alexrs94.site") return o;
+    if (host === "avaivy.cloud" || host.endsWith(".avaivy.cloud")) return o;
+    if (host === "rootmc.net" || host.endsWith(".rootmc.net")) return o;
     if (host.endsWith(".pages.dev")) return o;
   } catch {
     return null;
