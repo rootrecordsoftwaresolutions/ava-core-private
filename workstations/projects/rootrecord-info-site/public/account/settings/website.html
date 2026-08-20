@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Website — Account — RootRecord</title>
+  <meta name="description" content="Create and manage your Root Record personal website. Free trial, then $10/month."/>
+  <link rel="stylesheet" href="/styles.css?v=16"/>
+  <link rel="icon" href="/favicon-32.png"/>
+  <style>
+    .wh-steps { display: grid; gap: 1.25rem; margin: 1.5rem 0; }
+    .wh-step {
+      border: 1px solid var(--line);
+      background: var(--surface);
+      padding: 1.1rem 1.25rem;
+      border-radius: 10px;
+    }
+    .wh-step h3 { margin: 0 0 0.35rem; font-size: 1.05rem; }
+    .wh-step .step-num {
+      display: inline-block;
+      font-family: "JetBrains Mono", ui-monospace, monospace;
+      font-size: 0.75rem;
+      letter-spacing: 0.04em;
+      color: var(--moss);
+      margin-bottom: 0.35rem;
+    }
+    .wh-step label { display: block; margin: 0.65rem 0 0.25rem; font-size: 0.9rem; color: var(--ink-soft); }
+    .wh-step input, .wh-step select, .wh-step textarea {
+      width: 100%; max-width: 28rem;
+      background: var(--bg-1); color: var(--ink);
+      border: 1px solid var(--line); border-radius: 6px;
+      padding: 0.55rem 0.7rem; font: inherit;
+    }
+    .wh-step textarea { min-height: 5rem; max-width: 100%; }
+    .wh-meta { font-size: 0.9rem; color: var(--ink-muted); margin: 0.5rem 0; }
+    .wh-ns code { display: block; margin: 0.25rem 0; }
+    .wh-status { margin: 1rem 0; }
+    .wh-actions { display: flex; flex-wrap: wrap; gap: 0.6rem; margin-top: 0.85rem; }
+  </style>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <header class="site-header">
+    <div class="header-inner">
+      <a class="brand" href="/"><img src="/favicon-180.png" alt="RootRecord" width="36" height="36"/><span>RootRecord</span></a>
+      <nav class="nav" aria-label="Primary">
+        <a href="/account">Account</a>
+        <a href="/billing.html">Billing</a>
+        <a href="/website-hosting.html">Hosting</a>
+        <a href="/account/settings/website.html" aria-current="page">Website</a>
+      </nav>
+    </div>
+  </header>
+  <main id="main" class="page">
+    <section class="hero narrow">
+      <p class="eyebrow">Account · Website</p>
+      <h1>Your site</h1>
+      <p class="lede">Guided setup: name → theme → pages → domain → publish. Free trial, then <strong>$10/month</strong>.</p>
+      <p class="wh-status status" id="wh-status" role="status"></p>
+      <p class="wh-meta" id="wh-summary">Sign in to create or manage your site.</p>
+    </section>
+
+    <section class="wh-steps" id="wh-wizard">
+      <div class="wh-step" data-step="1">
+        <span class="step-num">Step 1</span>
+        <h3>Name</h3>
+        <p class="note">Public title and optional slug for your site.</p>
+        <label for="wh-title">Site title</label>
+        <input id="wh-title" type="text" maxlength="120" placeholder="Alex’s site" autocomplete="organization"/>
+        <label for="wh-slug">Slug (optional)</label>
+        <input id="wh-slug" type="text" maxlength="64" placeholder="alex" pattern="[a-z0-9\-]*"/>
+      </div>
+
+      <div class="wh-step" data-step="2">
+        <span class="step-num">Step 2</span>
+        <h3>Theme</h3>
+        <label for="wh-theme">Theme</label>
+        <select id="wh-theme">
+          <option value="default">Default (navy)</option>
+          <option value="minimal">Minimal</option>
+          <option value="editorial">Editorial</option>
+        </select>
+      </div>
+
+      <div class="wh-step" data-step="3">
+        <span class="step-num">Step 3</span>
+        <h3>Pages &amp; features</h3>
+        <p class="note">Pick what your site includes. You can edit copy after publish.</p>
+        <label for="wh-home-title">Home page title</label>
+        <input id="wh-home-title" type="text" maxlength="120" placeholder="Home" value="Home"/>
+        <label for="wh-home-body">Home intro</label>
+        <textarea id="wh-home-body" placeholder="Welcome to my site."></textarea>
+        <label for="wh-about">About</label>
+        <textarea id="wh-about" placeholder="Who you are, what you build…"></textarea>
+        <label for="wh-contact">Contact / CTA</label>
+        <input id="wh-contact" type="text" maxlength="200" placeholder="hello@example.com or a booking link"/>
+        <fieldset style="border:0;padding:0;margin:0.85rem 0 0">
+          <legend class="note" style="padding:0">Include</legend>
+          <label style="display:inline-flex;align-items:center;gap:0.4rem;margin-right:1rem"><input type="checkbox" id="wh-feat-blog" checked/> Blog</label>
+          <label style="display:inline-flex;align-items:center;gap:0.4rem;margin-right:1rem"><input type="checkbox" id="wh-feat-gallery"/> Gallery</label>
+          <label style="display:inline-flex;align-items:center;gap:0.4rem;margin-right:1rem"><input type="checkbox" id="wh-feat-projects"/> Projects</label>
+          <label style="display:inline-flex;align-items:center;gap:0.4rem"><input type="checkbox" id="wh-feat-links"/> Link-in-bio</label>
+        </fieldset>
+        <label for="wh-social">Social links (one per line)</label>
+        <textarea id="wh-social" placeholder="https://x.com/you&#10;https://github.com/you"></textarea>
+        <label for="wh-seo">SEO description</label>
+        <input id="wh-seo" type="text" maxlength="160" placeholder="Short description for search &amp; shares"/>
+      </div>
+
+      <div class="wh-step" data-step="4">
+        <span class="step-num">Step 4</span>
+        <h3>Domain &amp; nameservers</h3>
+        <p class="note">Until DNS is live, use <code>rootrecord.info/sites/&lt;id&gt;</code>.</p>
+        <label for="wh-domain">Custom domain</label>
+        <input id="wh-domain" type="text" maxlength="253" placeholder="alexrs94.site"/>
+        <div class="wh-ns note" id="wh-ns" hidden>
+          <p>Point nameservers at Cloudflare:</p>
+          <code id="wh-ns-1">ns1.cloudflare.com</code>
+          <code id="wh-ns-2">ns2.cloudflare.com</code>
+        </div>
+        <div class="wh-actions">
+          <button type="button" class="btn secondary" id="wh-save-domain">Save domain</button>
+        </div>
+      </div>
+
+      <div class="wh-step" data-step="5">
+        <span class="step-num">Step 5</span>
+        <h3>Publish</h3>
+        <p class="note">Creates the site and starts your free trial (no Stripe key required for scaffold).</p>
+        <div class="wh-actions">
+          <button type="button" class="btn primary" id="wh-create">Create site &amp; start trial</button>
+          <button type="button" class="btn secondary" id="wh-save" hidden>Save changes</button>
+          <a class="btn ghost" id="wh-open" href="/sites/" hidden>Open public URL</a>
+        </div>
+      </div>
+    </section>
+
+    <p><a href="/account">← Back to Account</a> · <a href="/website-hosting.html">Product page</a></p>
+  </main>
+  <script>
+(function () {
+  const TOKEN_KEY = "rootrecord_portal_token";
+  let apiBase = "";
+  let site = null;
+
+  const statusEl = document.getElementById("wh-status");
+  const summaryEl = document.getElementById("wh-summary");
+
+  function setStatus(msg, kind) {
+    statusEl.textContent = msg || "";
+    statusEl.className = "wh-status status" + (kind ? " " + kind : "");
+  }
+
+  async function loadConfig() {
+    try {
+      const res = await fetch("/api/site-config", { cache: "no-store" });
+      if (!res.ok) return;
+      const j = await res.json();
+      if (j && typeof j.apiBase === "string") apiBase = j.apiBase.replace(/\/+$/, "");
+    } catch { /* scaffold: API may be absent locally */ }
+  }
+
+  async function apiFetch(path, opts) {
+    if (!apiBase) {
+      return new Response(JSON.stringify({ detail: "API not configured on this host." }), { status: 503 });
+    }
+    const headers = new Headers(opts && opts.headers);
+    const token = localStorage.getItem(TOKEN_KEY);
+    if (token && !headers.has("Authorization")) headers.set("Authorization", "Bearer " + token);
+    if (opts && opts.body && !headers.has("Content-Type")) headers.set("Content-Type", "application/json");
+    return fetch(apiBase + path, Object.assign({}, opts, { headers: headers, credentials: "include" }));
+  }
+
+  function fillForm(s) {
+    site = s;
+    if (!s) {
+      summaryEl.textContent = "No site yet — complete the steps and publish to start your trial.";
+      document.getElementById("wh-create").hidden = false;
+      document.getElementById("wh-save").hidden = true;
+      document.getElementById("wh-open").hidden = true;
+      return;
+    }
+    document.getElementById("wh-title").value = s.title || "";
+    document.getElementById("wh-slug").value = s.slug || "";
+    document.getElementById("wh-domain").value = s.customDomain || "";
+    const cfg = s.config || {};
+    document.getElementById("wh-theme").value = cfg.theme || "default";
+    const home = (Array.isArray(cfg.pages) && cfg.pages[0]) || {};
+    document.getElementById("wh-home-title").value = home.title || "Home";
+    document.getElementById("wh-home-body").value = home.body || "";
+    document.getElementById("wh-about").value = cfg.about || "";
+    document.getElementById("wh-contact").value = cfg.contact || "";
+    document.getElementById("wh-seo").value = cfg.seoDescription || "";
+    document.getElementById("wh-social").value = Array.isArray(cfg.socialLinks)
+      ? cfg.socialLinks.join("\n")
+      : (cfg.socialLinks || "");
+    const feats = cfg.features || {};
+    document.getElementById("wh-feat-blog").checked = feats.blog !== false;
+    document.getElementById("wh-feat-gallery").checked = !!feats.gallery;
+    document.getElementById("wh-feat-projects").checked = !!feats.projects;
+    document.getElementById("wh-feat-links").checked = !!feats.links;
+    const ns = document.getElementById("wh-ns");
+    if (s.customDomain) {
+      ns.hidden = false;
+      const list = s.nameservers || ["ns1.cloudflare.com", "ns2.cloudflare.com"];
+      document.getElementById("wh-ns-1").textContent = list[0] || "";
+      document.getElementById("wh-ns-2").textContent = list[1] || "";
+    }
+    const pay = s.paywall ? " · paywall active (renew $10/mo)" : "";
+    summaryEl.innerHTML =
+      "Status: <strong>" + (s.subscriptionStatus || "—") + "</strong>" +
+      (s.trialEndsAt ? " · trial ends " + s.trialEndsAt.slice(0, 10) : "") +
+      pay +
+      "<br/>Public: <a href=\"" + (s.publicUrl || ("/sites/?id=" + encodeURIComponent(s.id))) + "\">" +
+      (s.publicUrl || ("/sites/?id=" + s.id)) + "</a>";
+    document.getElementById("wh-create").hidden = true;
+    document.getElementById("wh-save").hidden = false;
+    const open = document.getElementById("wh-open");
+    open.hidden = false;
+    open.href = s.publicUrl || ("/sites/?id=" + encodeURIComponent(s.id));
+  }
+
+  function configPayload() {
+    const social = document.getElementById("wh-social").value
+      .split(/\n+/)
+      .map(function (s) { return s.trim(); })
+      .filter(Boolean);
+    return {
+      theme: document.getElementById("wh-theme").value,
+      about: document.getElementById("wh-about").value.trim(),
+      contact: document.getElementById("wh-contact").value.trim(),
+      seoDescription: document.getElementById("wh-seo").value.trim(),
+      socialLinks: social,
+      features: {
+        blog: document.getElementById("wh-feat-blog").checked,
+        gallery: document.getElementById("wh-feat-gallery").checked,
+        projects: document.getElementById("wh-feat-projects").checked,
+        links: document.getElementById("wh-feat-links").checked
+      },
+      pages: [{
+        path: "/",
+        title: document.getElementById("wh-home-title").value.trim() || "Home",
+        body: document.getElementById("wh-home-body").value.trim()
+      }]
+    };
+  }
+
+  async function refresh() {
+    const res = await apiFetch("/api/sites/me", { method: "GET" });
+    if (res.status === 401) {
+      setStatus("Sign in on Account first, then return here.", "warn");
+      summaryEl.innerHTML = '<a href="/account">Sign in</a> to manage Website hosting.';
+      return;
+    }
+    if (!res.ok) {
+      const j = await res.json().catch(function () { return {}; });
+      setStatus(j.detail || ("Could not load site (" + res.status + ")."), "warn");
+      return;
+    }
+    const data = await res.json();
+    fillForm(data.site);
+    setStatus("");
+  }
+
+  document.getElementById("wh-create").addEventListener("click", async function () {
+    setStatus("Creating site…");
+    const body = {
+      title: document.getElementById("wh-title").value.trim() || "My site",
+      slug: document.getElementById("wh-slug").value.trim(),
+      config: configPayload()
+    };
+    const res = await apiFetch("/api/sites", { method: "POST", body: JSON.stringify(body) });
+    const data = await res.json().catch(function () { return {}; });
+    if (!res.ok) {
+      setStatus(data.detail || "Create failed.", "warn");
+      if (data.site) fillForm(data.site);
+      return;
+    }
+    setStatus("Trial started.", "ok");
+    fillForm(data.site);
+  });
+
+  document.getElementById("wh-save").addEventListener("click", async function () {
+    if (!site || !site.id) return;
+    setStatus("Saving…");
+    const body = {
+      title: document.getElementById("wh-title").value.trim(),
+      slug: document.getElementById("wh-slug").value.trim(),
+      config: configPayload()
+    };
+    const res = await apiFetch("/api/sites/" + encodeURIComponent(site.id), {
+      method: "PATCH",
+      body: JSON.stringify(body)
+    });
+    const data = await res.json().catch(function () { return {}; });
+    if (!res.ok) {
+      setStatus(data.detail || "Save failed.", "warn");
+      return;
+    }
+    setStatus("Saved.", "ok");
+    fillForm(data.site);
+  });
+
+  document.getElementById("wh-save-domain").addEventListener("click", async function () {
+    if (!site || !site.id) {
+      setStatus("Create the site first (step 5), then attach a domain.", "warn");
+      return;
+    }
+    setStatus("Saving domain…");
+    const res = await apiFetch("/api/sites/" + encodeURIComponent(site.id) + "/domain", {
+      method: "POST",
+      body: JSON.stringify({ domain: document.getElementById("wh-domain").value.trim() })
+    });
+    const data = await res.json().catch(function () { return {}; });
+    if (!res.ok) {
+      setStatus(data.detail || "Domain save failed.", "warn");
+      return;
+    }
+    setStatus("Domain saved — update nameservers at your registrar.", "ok");
+    fillForm(data.site);
+  });
+
+  loadConfig().then(refresh);
+})();
+  </script>
+  <script src="/site-nav.js?v=6" defer></script>
+</body>
+</html>

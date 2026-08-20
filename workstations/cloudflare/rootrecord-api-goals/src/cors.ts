@@ -1,16 +1,23 @@
 export const NWS_USER_AGENT = "RootRecordWeatherManagerMobile/1.0 (contact: root@rootrecord.info)";
 
+import { AsyncLocalStorage } from "node:async_hooks";
 import { allowedWebCredentialOrigin } from "./web-sso";
 
-/** Per-request binding so `json()` / `cors()` pick up credentialed CORS without threading Request through every call site. */
-let boundCorsRequest: Request | undefined;
+/** Per-request CORS origin. Must not be a module global — concurrent Worker requests share an isolate. */
+const corsRequest = new AsyncLocalStorage<Request>();
 
 export function bindCorsRequest(request: Request | undefined): void {
-  boundCorsRequest = request;
+  /* kept for call sites; real isolation is runWithCors / corsRequest.getStore() */
+  if (request) corsRequest.enterWith(request);
+}
+
+export function runWithCors<T>(request: Request, fn: () => T): T {
+  return corsRequest.run(request, fn);
 }
 
 export function cors(): Record<string, string> {
-  const origin = boundCorsRequest ? allowedWebCredentialOrigin(boundCorsRequest.headers.get("Origin")) : null;
+  const req = corsRequest.getStore();
+  const origin = req ? allowedWebCredentialOrigin(req.headers.get("Origin")) : null;
   if (origin) {
     return {
       "Access-Control-Allow-Origin": origin,

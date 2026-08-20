@@ -18,8 +18,8 @@ const PLAY_KILAUEA =
   "https://play.google.com/store/apps/details?id=com.rootrecord.kilauea";
 const PLAY_WEATHER =
   "https://play.google.com/store/apps/details?id=com.rootrecord.weathermanager";
-const WEB_KILAUEA = "https://kilauea.rootrecord.info";
-const SITE = "https://rootrecord.info";
+const WEB_KILAUEA = "https://rootrecord.online";
+const SITE = "https://rootrecord.online";
 const DISCORD = "https://discord.gg/uQ7kGFqtbG";
 const SUPPORT = "root@rootrecord.info";
 

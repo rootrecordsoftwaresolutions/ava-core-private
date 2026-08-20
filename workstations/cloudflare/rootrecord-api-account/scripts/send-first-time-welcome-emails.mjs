@@ -13,7 +13,7 @@ import { fileURLToPath } from "node:url";
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const root = join(__dirname, "..");
 const API_BASE = (
-  process.env.ROOTRECORD_API_ACCOUNT_BASE || "https://rootrecord-api-account.rootrecord.workers.dev"
+  process.env.ROOTRECORD_API_ACCOUNT_BASE || "https://api.rootrecord.online"
 ).replace(/\/$/, "");
 
 function loadEnvFile(path) {

@@ -321,7 +321,7 @@ async function handleCheckoutPost(request: Request, env: VisitingHawaiiSponsored
   const err = validateForSave(app, true);
   if (err) return json({ detail: `Complete your listing before checkout: ${err}` }, 400);
 
-  const site = (env.SITE_URL || "https://rootrecord.info").replace(/\/+$/, "");
+  const site = (env.SITE_URL || "https://rootrecord.online").replace(/\/+$/, "");
   const checkout = await createVisitingHawaiiSponsoredCheckout({
     secretKey: String(env.STRIPE_SECRET_KEY || ""),
     priceId: String(env.STRIPE_VISITING_HAWAII_SPONSORED_PRICE_ID || ""),

@@ -27,7 +27,7 @@ name = "EMAIL"
 
 [vars]
 WORKER_SHARD = "token"
-SITE_URL = "https://rootrecord.info"
+SITE_URL = "https://rootrecord.online"
 EMAIL_FROM = "RootRecord <root@rootrecord.info>"
 # AccuWeather: API key is a Worker **Secret** (`deploy.ps1` from repo-root `credentials.env` → `wrangler secret put ACCUWEATHER_API_KEY`), not [vars] (avoids Secret + var name clash in dashboard).
 # Optional language locale for responses (default in code: en-us)

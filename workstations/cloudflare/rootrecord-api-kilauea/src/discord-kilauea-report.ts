@@ -18,6 +18,7 @@ import {
   slimEarthquakeContextForAi,
   type EarthquakeActivitySummary,
 } from "./kilauea-earthquake-stats";
+import { archiveContextJson } from "./kilauea-archive-context";
 import {
   fetchOfficialKilaueaXUpdates,
   filterKilaueaRelevantOfficialXPosts,
@@ -498,6 +499,13 @@ function splitKilaueaReportText(content: string): { freeText: string; proText: s
     content
       .replace(/\bGrok\b/gi, "AI")
       .replace(/\bxAI\b/g, "AI")
+      .replace(/\bAva Ivy\b/gi, "")
+      .replace(/\bAva\b/g, "")
+      .replace(/\bOptiPlex\b/gi, "")
+      .replace(/\bRoot Server\b/gi, "")
+      .replace(/\bMariaDB\b/gi, "")
+      .replace(/\bCursor\b/g, "")
+      .replace(/[ \t]{2,}/g, " ")
       .trim() || "Kīlauea AI report generated, but no summary text was returned.";
   for (const marker of ["\n\n**Seismic activity", "\n\n**Weather", "\n\n**NWS", "\n\n**Official social", "\n\n**Tsunami"]) {
     const idx = clean.indexOf(marker);
@@ -904,7 +912,7 @@ async function insertKilaueaManualAnalysis(
       freeText,
       proText,
       String(env.GROK_MODEL || "grok-3-latest"),
-      jsonForArchive(context),
+      archiveContextJson(context),
       jsonForArchive(ai),
       prior?.id || null,
       nowIso,

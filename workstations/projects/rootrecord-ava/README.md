@@ -1,9 +1,5 @@
-# rootrecord.info/ava
+# rootrecord-ava
 
-Ava-core wiki (static) + live status proxy.
+Worker + static wiki for `rootrecord.info/ava*` and `rootrecord.info/timeline`.
 
-- Wiki: `https://rootrecord.info/ava/`
-- Status: `https://rootrecord.info/ava/status` → proxies `ava.rootmc.net`
-- Deploy: `cd /home/ava-core/ava/workstations/projects/rootrecord-ava && wrangler deploy`
-
-Account: Root Record CF (`2b317e91…`).
+Source of truth for public infra history: `public/timeline.html`.

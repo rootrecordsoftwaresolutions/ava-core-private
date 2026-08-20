@@ -293,6 +293,7 @@ export function scheduleAuthLoginDiscordSessionNotify(
   authPayload: Record<string, unknown>,
   deviceId: string | null,
 ): void {
+  try {
   const accountId = String(authPayload.account_id || "").trim();
   const email = String(authPayload.email || creds.email || "")
     .trim()
@@ -305,4 +306,7 @@ export function scheduleAuthLoginDiscordSessionNotify(
     mode: "signed_in",
     guestId: deviceId || undefined,
   });
+  } catch {
+    /* never fail login because Discord notify threw */
+  }
 }

@@ -28,6 +28,7 @@ import { handleBusinessRoutes, handleBusinessAuthEntitlement, bmWipeOwnedRows } 
 import { handleFeedbackRoute } from "./feedback-route";
 import { handlePartnershipSignupRoute } from "./partnership-signup";
 import { handleVisitingHawaiiSponsoredRoutes } from "./visiting-hawaii-sponsored-routes";
+import { handlePublicSitesPath, handleSitesRoutes } from "./sites-routes";
 import { performAccountDeletion } from "./account-deletion";
 import { handleRewardsLedgerV1 } from "./earn-rewards-ledger";
 import { handleEmailMarketingPrefsRoute } from "./email-marketing-prefs";
@@ -77,6 +78,7 @@ import { handleRootsSolSwapV1 } from "./roots-sol-swap";
 import { handleRootsTransactionsV1 } from "./roots-transactions";
 import { handleRootsOnchainBuyMonitorRoute } from "./roots-onchain-buy-monitor";
 import { handleInternalGrokChatPost } from "./internal-grok-chat";
+import { handleInternalConnectionStats } from "./connection-stats";
 
 // Weather/forecast/natural-disaster modules removed from this shard.
 // Live only on rootrecord-api-weather + rootrecord-api-kilauea (see ./weather.ts there).
@@ -119,6 +121,9 @@ export interface Env {
 
   /** Annual Price id for Visiting Hawaiʻi sponsored listings (`price_…`, $100/year). */
   STRIPE_VISITING_HAWAII_SPONSORED_PRICE_ID?: string;
+
+  /** Monthly Price id for Website Hosting ($10/mo). Optional for scaffold / trial-only. */
+  STRIPE_WEBSITE_HOSTING_PRICE_ID?: string;
 
 
   /**
@@ -356,6 +361,9 @@ export async function handleRequest(
 
 
   if (!pathname.startsWith("/api")) {
+
+    const publicSitesRes = await handlePublicSitesPath(request, env, pathname, method);
+    if (publicSitesRes) return publicSitesRes;
 
     if (method === "GET" && (pathname === "/" || pathname === "/health")) {
 
@@ -715,7 +723,7 @@ export async function handleRequest(
 
       const priceId = (env.STRIPE_PRICE_ID || "").trim();
 
-      const siteUrl = (env.SITE_URL || "https://rootrecord.info").trim();
+      const siteUrl = (env.SITE_URL || "https://rootrecord.online").trim();
 
       if (!secret.startsWith("sk_") || !priceId.startsWith("price_")) {
 
@@ -759,7 +767,7 @@ export async function handleRequest(
         if (wantJson) {
           return json({ detail: "Unauthorized" }, 401);
         }
-        const site = String(env.SITE_URL || "https://rootrecord.info")
+        const site = String(env.SITE_URL || "https://rootrecord.online")
           .trim()
           .replace(/\/+$/, "");
         const flow = String(startUrl.searchParams.get("flow") || "").trim().toLowerCase();
@@ -1038,6 +1046,10 @@ export async function handleRequest(
 
   if (method === "POST" && sub === "/internal/grok-chat") {
     return handleInternalGrokChatPost(request, env);
+  }
+
+  if (method === "GET" && sub === "/internal/connection-stats") {
+    return handleInternalConnectionStats(request, env);
   }
 
   if (method === "POST" && sub === "/internal/root-economy-discord-ping") {
@@ -1488,6 +1500,10 @@ export async function handleRequest(
   const visitingHawaiiSponsoredRes = await handleVisitingHawaiiSponsoredRoutes(request, env, sub, method);
 
   if (visitingHawaiiSponsoredRes) return visitingHawaiiSponsoredRes;
+
+  const sitesRes = await handleSitesRoutes(request, env, sub, method);
+
+  if (sitesRes) return sitesRes;
 
   const businessRes = await handleBusinessRoutes(request, env, sub, method);
 

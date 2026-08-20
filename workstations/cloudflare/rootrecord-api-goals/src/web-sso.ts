@@ -15,8 +15,12 @@ export function allowedWebCredentialOrigin(origin: string | null): string | null
     const u = new URL(o);
     const host = u.hostname.toLowerCase();
     if (host === "rootrecord.info" || host === "www.rootrecord.info") return o;
+    if (host === "rootrecord.online" || host === "www.rootrecord.online") return o;
+    if (host === "avaivy.cloud" || host === "www.avaivy.cloud") return o;
     if (host.endsWith(".rootrecord.info")) return o;
+    if (host.endsWith(".avaivy.cloud")) return o;
     if (host.endsWith(".pages.dev")) return o;
+    if (host.endsWith(".vercel.app") && (host.includes("rootrecord-online") || host.includes("avaivy"))) return o;
   } catch {
     return null;
   }

@@ -91,4 +91,4 @@ if (!res.ok) {
 }
 console.log("Registered global Kīlauea bot commands:", text);
 console.log("\nInteractions Endpoint URL:");
-console.log("https://rootrecord-api-kilauea.rootrecord.workers.dev/v1/discord/kilauea/interactions");
+console.log("https://api.rootrecord.online/v1/discord/kilauea/interactions");

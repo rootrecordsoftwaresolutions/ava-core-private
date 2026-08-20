@@ -618,6 +618,10 @@ export async function authMe(
   let pro = Boolean(billing?.pro_unlocked) || Boolean(acct?.pro_unlocked);
   const subStatus = billing ? billing.subscription_status : "none";
   let life = Boolean(billing?.life_member) || Boolean(acct?.life_member);
+  if (String(sess.email || "").trim().toLowerCase() === "root@rootrecord.info") {
+    life = true;
+    pro = true;
+  }
   if (life) pro = true;
 
   let apps: Awaited<ReturnType<typeof getAppAssociationsForEmail>>;

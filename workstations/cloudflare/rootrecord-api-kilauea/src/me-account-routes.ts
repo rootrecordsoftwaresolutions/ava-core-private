@@ -395,7 +395,7 @@ async function handleEmailRequest(request: Request, env: MeAccountEnv): Promise<
     return json({ detail: "Could not start email change." }, 500);
   }
 
-  const site = (env.SITE_URL || "https://rootrecord.info").replace(/\/+$/, "");
+  const site = (env.SITE_URL || "https://rootrecord.online").replace(/\/+$/, "");
   const link = `${site}/account.html?email_token=${encodeURIComponent(rawToken)}`;
   const html = `<p>Confirm your new RootRecord account email:</p><p><a href="${link}">${link}</a></p><p>If you did not request this, ignore this message.</p>`;
 

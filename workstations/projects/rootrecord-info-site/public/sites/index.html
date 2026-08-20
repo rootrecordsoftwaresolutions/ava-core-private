@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Site — RootRecord</title>
+  <meta name="description" content="Hosted on Root Record."/>
+  <link rel="stylesheet" href="/styles.css?v=16"/>
+  <link rel="icon" href="/favicon-32.png"/>
+  <style>
+    .site-shell { min-height: 70vh; padding: 2rem 1.25rem 4rem; }
+    .site-shell .site-title { font-family: Fraunces, Georgia, serif; font-size: clamp(1.8rem, 4vw, 2.6rem); margin: 0 0 0.5rem; }
+    .site-shell .site-body { color: var(--ink-soft); max-width: 40rem; white-space: pre-wrap; }
+    .site-shell .site-meta { color: var(--ink-muted); font-size: 0.85rem; margin-bottom: 1.5rem; }
+    .paywall-backdrop {
+      position: fixed; inset: 0; background: rgba(0, 8, 20, 0.72);
+      display: flex; align-items: center; justify-content: center;
+      padding: 1.25rem; z-index: 80;
+    }
+    .paywall-modal {
+      background: var(--surface); border: 1px solid var(--line);
+      border-radius: 12px; padding: 1.5rem 1.4rem; max-width: 26rem; width: 100%;
+      box-shadow: var(--shadow-lg);
+    }
+    .paywall-modal h2 { margin: 0 0 0.5rem; font-size: 1.25rem; }
+    .paywall-modal p { color: var(--ink-soft); margin: 0 0 1rem; }
+    .paywall-modal[hidden], .paywall-backdrop[hidden] { display: none !important; }
+  </style>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <header class="site-header">
+    <div class="header-inner">
+      <a class="brand" href="/"><img src="/favicon-180.png" alt="RootRecord" width="36" height="36"/><span>RootRecord</span></a>
+      <nav class="nav" aria-label="Primary">
+        <a href="/website-hosting.html">Hosting</a>
+        <a href="/account/settings/website.html">Manage</a>
+      </nav>
+    </div>
+  </header>
+
+  <main id="main" class="site-shell page">
+    <p class="site-meta" id="shell-meta">Loading site…</p>
+    <h1 class="site-title" id="shell-title">—</h1>
+    <div class="site-body" id="shell-body"></div>
+  </main>
+
+  <div class="paywall-backdrop" id="paywall" hidden role="dialog" aria-modal="true" aria-labelledby="paywall-title">
+    <div class="paywall-modal">
+      <h2 id="paywall-title">Subscription inactive</h2>
+      <p id="paywall-copy">This site’s Website Hosting subscription has lapsed. Renew for <strong>$10/month</strong> to remove the paywall.</p>
+      <p class="note" id="paywall-invoice" hidden></p>
+      <p>
+        <a class="btn primary" href="/account/settings/website.html">Renew in Account</a>
+        <a class="btn ghost" href="/billing.html">Billing</a>
+      </p>
+    </div>
+  </div>
+
+  <script>
+(function () {
+  function resolveSiteId() {
+    const u = new URL(window.location.href);
+    const q = u.searchParams.get("id") || u.searchParams.get("site");
+    if (q) return q.trim();
+    const parts = u.pathname.replace(/\/+$/, "").split("/").filter(Boolean);
+    if (parts[0] === "sites" && parts[1]) return decodeURIComponent(parts[1]);
+    if (parts.length === 1) {
+      const raw = decodeURIComponent(parts[0]);
+      const vanity = raw.match(/^([0-9a-f-]{36})-Website$/i);
+      if (vanity) return vanity[1];
+      if (/^[0-9a-f-]{36}$/i.test(raw)) return raw;
+    }
+    return "";
+  }
+
+  let apiBase = "";
+
+  async function loadConfig() {
+    try {
+      const res = await fetch("/api/site-config", { cache: "no-store" });
+      if (!res.ok) return;
+      const j = await res.json();
+      if (j && typeof j.apiBase === "string") apiBase = j.apiBase.replace(/\/+$/, "");
+    } catch { /* ignore */ }
+  }
+
+  function showPaywall(data) {
+    const el = document.getElementById("paywall");
+    el.hidden = false;
+    const inv = document.getElementById("paywall-invoice");
+    if (data && data.invoice) {
+      inv.hidden = false;
+      const dollars = ((data.invoice.amountCents || 1000) / 100).toFixed(0);
+      inv.textContent = "Open invoice: $" + dollars + " due " + (data.invoice.dueAt || "").slice(0, 10) + ".";
+    }
+  }
+
+  function render(data) {
+    document.getElementById("shell-meta").textContent =
+      (data.customDomain ? data.customDomain + " · " : "") +
+      "Hosted on Root Record" +
+      (data.paywall ? " · subscription inactive" : "");
+    document.getElementById("shell-title").textContent = data.title || "Untitled site";
+    const cfg = data.config || {};
+    const pages = cfg.pages || [];
+    const home = pages[0] || {};
+    const bits = [];
+    if (home.body) bits.push(home.body);
+    if (cfg.about) bits.push(cfg.about);
+    if (cfg.contact) bits.push("Contact: " + cfg.contact);
+    document.getElementById("shell-body").textContent =
+      bits.join("\n\n") || (data.paywall ? "" : "This site is live. Content will appear here as pages are published.");
+    document.title = (data.title || "Site") + " — RootRecord";
+    if (cfg.seoDescription) {
+      let md = document.querySelector('meta[name="description"]');
+      if (md) md.setAttribute("content", cfg.seoDescription);
+    }
+    if (data.paywall) showPaywall(data);
+  }
+
+  async function run() {
+    const id = resolveSiteId();
+    const meta = document.getElementById("shell-meta");
+    if (!id) {
+      meta.textContent = "Missing site id. Use /sites/?id=<uuid> or /sites/<uuid>.";
+      document.getElementById("shell-title").textContent = "Site not specified";
+      return;
+    }
+    await loadConfig();
+    const url = (apiBase || "") + "/public/sites/" + encodeURIComponent(id);
+    try {
+      const res = await fetch(url, { credentials: "omit", cache: "no-store" });
+      const data = await res.json().catch(function () { return {}; });
+      if (!res.ok) {
+        meta.textContent = data.detail || ("Could not load site (" + res.status + ").");
+        document.getElementById("shell-title").textContent = "Unavailable";
+        if (data.paywall) showPaywall(data);
+        return;
+      }
+      render(data);
+    } catch (e) {
+      meta.textContent = "Could not reach the sites API. Showing shell only.";
+      document.getElementById("shell-title").textContent = "Site " + id.slice(0, 8) + "…";
+      document.getElementById("shell-body").textContent =
+        "API unreachable from this host. Wire /api/site-config → apiBase, or open via the account worker.";
+    }
+  }
+
+  run();
+})();
+  </script>
+</body>
+</html>

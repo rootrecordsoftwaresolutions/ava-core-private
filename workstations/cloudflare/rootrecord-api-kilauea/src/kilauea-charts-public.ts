@@ -36,7 +36,15 @@ function publicReportBody(raw: unknown, max: number): string {
   const s = String(raw ?? "")
     .replace(/\bGrok\b/gi, "AI")
     .replace(/\bxAI\b/g, "AI")
+    .replace(/\bAva Ivy\b/gi, "")
+    .replace(/\bAva\b/g, "")
+    .replace(/\bOptiPlex\b/gi, "")
+    .replace(/\bRoot Server\b/gi, "")
+    .replace(/\bMariaDB\b/gi, "")
+    .replace(/\bCursor\b/g, "")
+    .replace(/[ \t]{2,}/g, " ")
     .replace(/\r\n/g, "\n")
+    .replace(/\n{3,}/g, "\n\n")
     .trim();
   if (s.length <= max) return s;
   const slice = s.slice(0, max - 1);

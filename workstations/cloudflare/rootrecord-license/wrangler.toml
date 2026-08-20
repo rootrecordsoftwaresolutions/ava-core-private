@@ -4,6 +4,7 @@
 # Cloudflare account: set CLOUDFLARE_ACCOUNT_ID in repo-root credentials.env (loaded by deploy.ps1), or run `wrangler login`.
 # database_id must match rootrecord-primary/wrangler.toml and credentials.env D1_DATABASE_ID.
 name = "rootrecord-license"
+account_id = "2b317e91da019f4fdb854e3b8e26fa94"
 main = "src/index.ts"
 compatibility_date = "2024-11-01"
 

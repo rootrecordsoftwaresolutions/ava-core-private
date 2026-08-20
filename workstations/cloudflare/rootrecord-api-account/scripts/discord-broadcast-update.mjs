@@ -46,7 +46,7 @@ const credPath =
   path.resolve(process.cwd(), "../../../credentials.env");
 const env = readEnvFile(credPath);
 const adminKey = String(env.RR_PUSH_ADMIN_KEY || env.RR_PUSH_ADMIN_SECRET || "").trim();
-const base = String(process.env.RR_API_BASE || env.RR_API_BASE || "https://rootrecord-api-account.rootrecord.workers.dev/api").replace(/\/+$/, "");
+const base = String(process.env.RR_API_BASE || env.RR_API_BASE || "https://api.rootrecord.online/api").replace(/\/+$/, "");
 
 if (!adminKey) {
   console.error("Missing RR_PUSH_ADMIN_KEY (or RR_PUSH_ADMIN_SECRET) in credentials.env");

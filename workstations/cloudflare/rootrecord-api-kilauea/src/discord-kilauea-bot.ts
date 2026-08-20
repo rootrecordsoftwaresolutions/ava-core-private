@@ -189,7 +189,7 @@ async function postToChannelWithFallbacks(
       const embeds = Array.isArray(payload.embeds) ? payload.embeds : undefined;
       const whBody: Record<string, unknown> = {
         username: "Kilauea Alerts",
-        avatar_url: "https://rootrecord.info/favicon.png",
+        avatar_url: "https://rootrecord.online/favicon.png",
       };
       if (content) whBody.content = content;
       if (embeds?.length) whBody.embeds = embeds;

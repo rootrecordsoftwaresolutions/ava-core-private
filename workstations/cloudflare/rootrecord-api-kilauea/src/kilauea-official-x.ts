@@ -26,7 +26,8 @@ const HAWAII_FOCUSED_X_HANDLES = new Set(["nwshonolulu", "hawaii_ema", "civildef
 
 export const KILAUEA_BRIEF_SCOPE_INSTRUCTION =
   "Scope reports to Kīlauea, Hawaiʻi Island, and Hawaiʻi-relevant hazards only. " +
-  "Do not mention mainland or other-region volcano activity, routine observatory roundups, or distant earthquakes unless the event is massive, life-threatening, or tsunami-related for Hawaiʻi/Pacific interests.";
+  "Do not mention mainland or other-region volcano activity, routine observatory roundups, or distant earthquakes unless the event is massive, life-threatening, or tsunami-related for Hawaiʻi/Pacific interests. " +
+  "Keep language professional and public-facing. Never mention Ava, Ava Ivy, OptiPlex, Root Server, MariaDB, Discord digs, Cursor, operators, internal tooling, cron jobs, or other backend/ops context.";
 
 function xHandle(account: string | null | undefined): string {
   return String(account || "")

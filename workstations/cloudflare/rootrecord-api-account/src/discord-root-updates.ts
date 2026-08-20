@@ -108,7 +108,7 @@ function helpContent(): string {
     "• **Kīlauea Alerts** — USGS quakes + AI reports (`/config`, `/data`, `/kilauea`)\n" +
     "• **Root Economy** — ROOTS balance and transfers (`/bal`, `/send`, …)\n" +
     "• **RootMC** — Minecraft / Realm / Block Notes (`/server`, `/help`)\n\n" +
-    "https://rootrecord.info/products"
+    "https://rootrecord.online/products"
   );
 }
 

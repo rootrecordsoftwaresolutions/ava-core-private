@@ -667,7 +667,7 @@ export async function handleRequest(
 
       const priceId = (env.STRIPE_PRICE_ID || "").trim();
 
-      const siteUrl = (env.SITE_URL || "https://rootrecord.info").trim();
+      const siteUrl = (env.SITE_URL || "https://rootrecord.online").trim();
 
       if (!secret.startsWith("sk_") || !priceId.startsWith("price_")) {
 

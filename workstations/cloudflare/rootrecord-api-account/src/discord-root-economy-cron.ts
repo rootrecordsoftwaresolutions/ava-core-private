@@ -68,7 +68,7 @@ export function buildEconomyCronPingMessage(
   }
   lines.push(
     "",
-    "Chart: **https://rootrecord.info/charts/root-economy/**",
+    "Chart: **https://rootrecord.online/charts/root-economy/**",
     "Board: **https://farms.rootrecord.info/**",
   );
   let content = lines.join("\n");

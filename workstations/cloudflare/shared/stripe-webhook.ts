@@ -1,6 +1,8 @@
 import type { BillingD1 } from "./billing-state";
 
 import { applyStripeBillingPatch } from "./apply-stripe-billing";
+import { creditStripeShardPurchase } from "./ava-shards";
+import { CARD_FEE_BPS, feeFromBps } from "./platform-fees";
 import { ROOTS_ATOMIC_PER_WHOLE } from "./roots-units";
 import {
   activateVisitingHawaiiListing,
@@ -245,6 +247,89 @@ async function onVisitingHawaiiSponsoredCheckout(
   });
 }
 
+function stripeMeta(obj: Record<string, unknown>): Record<string, unknown> {
+  const m = obj.metadata;
+  return m && typeof m === "object" && !Array.isArray(m) ? (m as Record<string, unknown>) : {};
+}
+
+async function tryRecordGoalDonation(
+  db: BillingD1,
+  session: Record<string, unknown>,
+): Promise<boolean> {
+  const meta = stripeMeta(session);
+  if (String(meta.kind || "") !== "goal_donation") return false;
+  const goalId = String(meta.goal_id || "").trim();
+  if (!goalId) return true;
+  const paid = String(session.payment_status || "").toLowerCase();
+  if (paid && paid !== "paid" && paid !== "no_payment_required") return true;
+  const cents = Math.max(0, Math.round(Number(session.amount_total) || 0));
+  const txRef = String(session.id || "").trim();
+  if (!txRef || cents <= 0) return true;
+  const fee = feeFromBps(cents, CARD_FEE_BPS);
+  const net = Math.max(0, cents - fee);
+  const email =
+    typeof session.customer_details === "object" && session.customer_details
+      ? String((session.customer_details as { email?: string }).email || "")
+      : String(session.customer_email || "");
+  const now = new Date().toISOString();
+  let payerAccountId: string | null = null;
+  if (email) {
+    try {
+      const la = await db
+        .prepare("SELECT id FROM license_accounts WHERE email = ? LIMIT 1")
+        .bind(email.toLowerCase())
+        .first<{ id: string }>();
+      payerAccountId = String(la?.id || "").trim() || null;
+    } catch {
+      payerAccountId = null;
+    }
+  }
+  try {
+    const closed = await db
+      .prepare(`SELECT funding_status FROM rg_goals WHERE id = ?`)
+      .bind(goalId)
+      .first<{ funding_status: string | null }>();
+    if (String(closed?.funding_status || "open").toLowerCase() === "refunded") return true;
+    const ins = await db
+      .prepare(
+        `INSERT OR IGNORE INTO rg_goal_donations (id, goal_id, source, amount_cents, currency, tx_ref, payer_email, created_at, fee_cents, net_cents, payer_account_id)
+         VALUES (?, ?, 'stripe', ?, 'usd', ?, ?, ?, ?, ?, ?)`,
+      )
+      .bind(crypto.randomUUID(), goalId, cents, txRef, email || null, now, fee, net, payerAccountId)
+      .run();
+    const changed = Number((ins as { meta?: { changes?: number } })?.meta?.changes || 0);
+    if (changed > 0) {
+      await db
+        .prepare(`UPDATE rg_goals SET raised_cents = COALESCE(raised_cents, 0) + ?, updated_at = ? WHERE id = ?`)
+        .bind(net, now, goalId)
+        .run();
+    }
+  } catch (e) {
+    console.error(
+      "goal donation record",
+      String(e && typeof e === "object" && "message" in e ? (e as Error).message : e),
+    );
+  }
+  return true;
+}
+
+async function tryCreditAvaShards(db: BillingD1, session: Record<string, unknown>): Promise<boolean> {
+  const meta = stripeMeta(session);
+  if (String(meta.kind || "") !== "ava_shards") return false;
+  const paid = String(session.payment_status || "").toLowerCase();
+  if (paid && paid !== "paid" && paid !== "no_payment_required") return true;
+  const cents = Math.max(0, Math.round(Number(session.amount_total) || 0));
+  const txRef = String(session.id || "").trim();
+  let accountId = String(meta.account_id || session.client_reference_id || "").trim();
+  if (!accountId) {
+    const user = await resolvePortalUser(db, session);
+    accountId = user?.accountId || "";
+  }
+  if (!accountId || !txRef || cents <= 0) return true;
+  await creditStripeShardPurchase(db, { accountId, usdCents: cents, txRef });
+  return true;
+}
+
 async function onCheckoutSessionCompleted(
   db: BillingD1,
   secret: string,
@@ -256,6 +341,10 @@ async function onCheckoutSessionCompleted(
     await onVisitingHawaiiSponsoredCheckout(db, secret, session);
     return;
   }
+
+  if (await tryRecordGoalDonation(db, session)) return;
+
+  if (await tryCreditAvaShards(db, session)) return;
 
   const user = await resolvePortalUser(db, session);
   if (!user) return;

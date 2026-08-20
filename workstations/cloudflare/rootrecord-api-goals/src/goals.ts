@@ -1,4 +1,4 @@
-import type { D1Database, ExecutionContext } from "@cloudflare/workers-types";
+import type { D1Database, ExecutionContext, R2Bucket } from "@cloudflare/workers-types";
 
 import { json } from "./cors";
 import { scheduleGoalsAiDiscordNotify, type GoalsDiscordAiEnv } from "./goals-discord-ai";
@@ -14,9 +14,30 @@ import {
   runGoalPlanAi,
   type GoalsAiEnv,
 } from "./goals-ai";
-import { activeGoalCount, loadMemberFlags } from "./goals-limits";
+import { activeGoalCount, canPostPublicGoals, loadMemberFlags } from "./goals-limits";
+import { emailFromUserId, isServerGoalUser, SERVER_GOAL_EMAIL } from "./goal-constants";
+import { ensureProfile } from "./profiles";
+import {
+  fundingPublicFields,
+  parseImagePayload,
+  provisionGoalFunding,
+  storeGoalImage,
+} from "./goal-funding";
+import { fundingFlags } from "./goal-payout";
 
-export type GoalsEnv = GoalsAiEnv & GoalsDiscordAiEnv & { DB: D1Database };
+export type GoalsEnv = GoalsAiEnv &
+  GoalsDiscordAiEnv & {
+    DB: D1Database;
+    SITE_URL?: string;
+    GOAL_MEDIA?: R2Bucket;
+    STRIPE_SECRET_KEY?: string;
+    INTERNAL_WALLET_ENC_KEY_B64?: string;
+    SOLANA_RPC_URL?: string;
+    SOLANA_CLUSTER?: string;
+    RRTT_TREASURY_SECRET_KEY_B58?: string;
+    GOAL_TOKEN_RPC_URL?: string;
+    GOAL_TOKEN_CLUSTER?: string;
+  };
 
 function str(v: unknown): string {
   return typeof v === "string" ? v.trim() : "";
@@ -54,13 +75,46 @@ function estimateTargetDate(minDays: number | null, maxDays: number | null): str
   return d.toISOString().slice(0, 10);
 }
 
+function clampPercent(v: unknown, fallback = 0): number {
+  const n = Math.floor(Number(v));
+  if (!Number.isFinite(n)) return fallback;
+  return Math.max(0, Math.min(100, n));
+}
+
+function parseTargetDate(v: unknown): string | null {
+  const raw = str(v);
+  if (!raw) return null;
+  const m = raw.match(/^(\d{4}-\d{2}-\d{2})/);
+  return m ? m[1]! : null;
+}
+
+/** Creators may raise a published target, never lower or clear it. */
+export function raisedOrSameTargetCents(
+  current: unknown,
+  incoming: unknown,
+): { ok: true; cents: number | null } | { ok: false; detail: string } {
+  const currentCents = Math.max(0, Math.floor(Number(current) || 0));
+  if (incoming == null || incoming === "") {
+    return { ok: true, cents: currentCents > 0 ? currentCents : null };
+  }
+  const next = num(incoming);
+  if (next == null || next < 0) {
+    return { ok: false, detail: "Goal target must be a non-negative number." };
+  }
+  const nextCents = Math.floor(next);
+  if (nextCents < currentCents) {
+    return { ok: false, detail: "Goal target can only be raised, not lowered." };
+  }
+  return { ok: true, cents: nextCents };
+}
+
 function ownerKey(userId: string, guestId: string): string {
   if (userId.startsWith("user:")) return userId;
   if (guestId) return `guest:${guestId}`;
   return userId;
 }
 
-function goalPayload(row: Record<string, unknown>) {
+function goalPayload(row: Record<string, unknown>, env: GoalsEnv = {} as GoalsEnv) {
   let aiOk = true;
   let aiErrorDetail: string | null = null;
   if (row.ai_response_json) {
@@ -82,6 +136,7 @@ function goalPayload(row: Record<string, unknown>) {
     purpose: row.purpose,
     requires_money: Boolean(row.requires_money),
     estimated_cost_cents: row.estimated_cost_cents,
+    percent_complete: clampPercent(row.percent_complete, 0),
     user_steps_summary: row.user_steps_summary,
     min_days: row.min_days,
     max_days: row.max_days,
@@ -95,6 +150,7 @@ function goalPayload(row: Record<string, unknown>) {
     public_enabled: Boolean(row.public_enabled),
     created_at: row.created_at,
     updated_at: row.updated_at,
+    ...fundingPublicFields(row, env),
   };
 }
 
@@ -163,7 +219,7 @@ async function applyAiToGoal(
   });
 
   const next = await env.DB.prepare(`SELECT * FROM rg_goals WHERE id = ?`).bind(goalId).first<Record<string, unknown>>();
-  return { payload: next ? goalPayload(next) : goalPayload(goalRow), aiOk };
+  return { payload: next ? goalPayload(next, env) : goalPayload(goalRow, env), aiOk };
 }
 
 async function uniqueSlug(db: D1Database, userId: string, title: string, excludeId?: string): Promise<string> {
@@ -250,28 +306,42 @@ async function createGoalFromDraft(
   const now = new Date().toISOString();
   const minDays = num(draft.min_days);
   const maxDays = num(draft.max_days);
-  const userInput = { ...draft, captured_at: now };
+  const wantPublic = bool01(draft.public_enabled) === 1 || bool01(draft.public) === 1;
+  if (wantPublic && !(await canPostPublicGoals(env.DB, userId))) {
+    throw new Error("Only Root Record members can post public goals.");
+  }
+  const costCents = num(draft.estimated_cost_cents);
+  const requiresMoney =
+    draft.requires_money != null
+      ? bool01(draft.requires_money) === 1
+      : costCents != null && costCents > 0;
+  const targetDate =
+    parseTargetDate(draft.target_date_est) ?? estimateTargetDate(minDays, maxDays);
+  const percentComplete = clampPercent(draft.percent_complete, 0);
+  const { image_base64: _b64, image: _img, image_content_type: _ct, ...draftRest } = draft;
+  const userInput = { ...draftRest, captured_at: now };
   const preRow = {
     id,
     user_input_json: JSON.stringify(userInput),
     title,
     purpose: str(draft.purpose),
-    requires_money: bool01(draft.requires_money),
-    estimated_cost_cents: num(draft.estimated_cost_cents),
+    requires_money: requiresMoney ? 1 : 0,
+    estimated_cost_cents: requiresMoney ? costCents : null,
+    percent_complete: percentComplete,
     user_steps_summary: str(draft.user_steps_summary),
     min_days: minDays,
     max_days: maxDays,
-    target_date_est: estimateTargetDate(minDays, maxDays),
+    target_date_est: targetDate,
     ai_response_json: null,
   };
 
   await env.DB.prepare(
     `INSERT INTO rg_goals (
       id, user_id, slug, title, category_id, purpose, requires_money, estimated_cost_cents,
-      user_steps_summary, min_days, max_days, target_date_est, user_input_json,
+      percent_complete, user_steps_summary, min_days, max_days, target_date_est, user_input_json,
       ai_summary_text, ai_plan_json, ai_model, ai_prompt_json, ai_response_json, ai_generated_at,
       public_enabled, created_at, updated_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, '', '{}', NULL, '{}', '{}', NULL, 0, ?, ?)`,
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, '', '{}', NULL, '{}', '{}', NULL, ?, ?, ?)`,
   )
     .bind(
       id,
@@ -280,22 +350,43 @@ async function createGoalFromDraft(
       title,
       str(draft.category_id) || null,
       str(draft.purpose),
-      bool01(draft.requires_money),
-      num(draft.estimated_cost_cents),
+      requiresMoney ? 1 : 0,
+      requiresMoney ? costCents : null,
+      percentComplete,
       str(draft.user_steps_summary),
       minDays,
       maxDays,
-      estimateTargetDate(minDays, maxDays),
+      targetDate,
       JSON.stringify(userInput),
+      wantPublic ? 1 : 0,
       now,
       now,
     )
     .run();
 
+  const tokenSymbol = str(draft.token_symbol).toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 8);
+  if (tokenSymbol) {
+    await env.DB.prepare(`UPDATE rg_goals SET token_symbol = ? WHERE id = ?`).bind(tokenSymbol, id).run();
+  }
+  const posterEmail = isServerGoalUser(userId) ? SERVER_GOAL_EMAIL : emailFromUserId(userId);
+  if (posterEmail) {
+    await ensureProfile(env, posterEmail);
+    await env.DB.prepare(`UPDATE rg_goals SET posted_by_email = ? WHERE id = ?`).bind(posterEmail, id).run();
+  }
+
+  const img = parseImagePayload(draft);
+  if (img) {
+    await storeGoalImage(env, id, img.bytes, img.contentType);
+  }
+
   await applyAiToGoal(env, userId, id, preRow as Record<string, unknown>, "initial_plan", ctx);
 
+  if (wantPublic) {
+    await provisionGoalFunding(env, userId, id, ctx);
+  }
+
   const row = await env.DB.prepare(`SELECT * FROM rg_goals WHERE id = ?`).bind(id).first<Record<string, unknown>>();
-  return row ? goalPayload(row) : { id, slug, title };
+  return row ? goalPayload(row, env) : { id, slug, title };
 }
 
 export async function handleOnboardingFinalize(
@@ -356,13 +447,16 @@ export async function handleGoalsList(
     )
       .bind(userId)
       .all();
-    const goals = (rows.results ?? []).map((r) => goalPayload(r as Record<string, unknown>));
+    const goals = (rows.results ?? []).map((r) => goalPayload(r as Record<string, unknown>, env));
     const { member, maxGoals } = await loadMemberFlags(env.DB, userId);
     return json({ goals, limits: { member, max_goals: maxGoals, active: goals.length } });
   }
   if (request.method === "POST") {
     if (!userId.startsWith("user:")) {
       return json({ detail: "Sign in to create a goal." }, 401);
+    }
+    if (!(await canPostPublicGoals(env.DB, userId))) {
+      return json({ detail: "Only Root Record members can post public goals." }, 403);
     }
     const body = record(await request.json().catch(() => ({})));
     try {
@@ -401,7 +495,8 @@ export async function handleGoalById(
     const suggestions = await listGoalSuggestions(env.DB, goalId);
     const { member, maxGoals } = await loadMemberFlags(env.DB, userId);
     return json({
-      goal: goalPayload(row),
+      goal: goalPayload(row, env),
+      funding: fundingFlags(row),
       achievements: achievements.results ?? [],
       entries: entries.results ?? [],
       actions,
@@ -417,11 +512,35 @@ export async function handleGoalById(
     const slug =
       body.title != null ? await uniqueSlug(env.DB, userId, title, goalId) : str(row.slug);
     const updatedAt = new Date().toISOString();
+    let nextCost = row.estimated_cost_cents;
+    if (Object.prototype.hasOwnProperty.call(body, "estimated_cost_cents")) {
+      const raised = raisedOrSameTargetCents(row.estimated_cost_cents, body.estimated_cost_cents);
+      if (!raised.ok) return json({ detail: raised.detail }, 400);
+      nextCost = raised.cents;
+    }
+    const nextRequiresMoney =
+      body.requires_money != null ? bool01(body.requires_money) : row.requires_money;
+    if (!nextRequiresMoney) {
+      // Non-monetary goals do not keep a fundraising target.
+      nextCost = null;
+    }
+    let nextTargetDate = row.target_date_est;
+    if (Object.prototype.hasOwnProperty.call(body, "target_date_est")) {
+      nextTargetDate = parseTargetDate(body.target_date_est);
+    } else if (body.min_days != null || body.max_days != null) {
+      nextTargetDate = estimateTargetDate(
+        num(body.min_days ?? row.min_days),
+        num(body.max_days ?? row.max_days),
+      );
+    }
+    const nextPct = Object.prototype.hasOwnProperty.call(body, "percent_complete")
+      ? clampPercent(body.percent_complete, clampPercent(row.percent_complete, 0))
+      : clampPercent(row.percent_complete, 0);
     await env.DB.prepare(
       `UPDATE rg_goals SET
         title = ?, slug = ?, category_id = ?, purpose = ?, requires_money = ?,
-        estimated_cost_cents = ?, user_steps_summary = ?, min_days = ?, max_days = ?,
-        target_date_est = ?, public_enabled = ?, updated_at = ?
+        estimated_cost_cents = ?, percent_complete = ?, user_steps_summary = ?, min_days = ?, max_days = ?,
+        target_date_est = ?, public_enabled = ?, token_symbol = ?, updated_at = ?
        WHERE id = ? AND user_id = ?`,
     )
       .bind(
@@ -429,26 +548,40 @@ export async function handleGoalById(
         slug,
         body.category_id != null ? str(body.category_id) || null : row.category_id,
         body.purpose != null ? str(body.purpose) : row.purpose,
-        body.requires_money != null ? bool01(body.requires_money) : row.requires_money,
-        body.estimated_cost_cents != null ? num(body.estimated_cost_cents) : row.estimated_cost_cents,
+        nextRequiresMoney,
+        nextCost,
+        nextPct,
         body.user_steps_summary != null ? str(body.user_steps_summary) : row.user_steps_summary,
         body.min_days != null ? num(body.min_days) : row.min_days,
         body.max_days != null ? num(body.max_days) : row.max_days,
-        estimateTargetDate(
-          num(body.min_days ?? row.min_days),
-          num(body.max_days ?? row.max_days),
-        ),
+        nextTargetDate,
         body.public_enabled != null ? bool01(body.public_enabled) : row.public_enabled,
+        body.token_symbol != null
+          ? str(body.token_symbol).toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 8) || row.token_symbol
+          : row.token_symbol,
         updatedAt,
         goalId,
         userId,
       )
       .run();
+    const img = parseImagePayload(body);
+    if (img) await storeGoalImage(env, goalId, img.bytes, img.contentType);
+    if (body.public_enabled != null && bool01(body.public_enabled) === 1) {
+      await provisionGoalFunding(env, userId, goalId);
+    }
     const next = await env.DB.prepare(`SELECT * FROM rg_goals WHERE id = ?`).bind(goalId).first<Record<string, unknown>>();
-    return json({ goal: next ? goalPayload(next) : null });
+    return json({ goal: next ? goalPayload(next, env) : null });
   }
 
   if (request.method === "DELETE") {
+    const raised = Math.max(0, Math.floor(Number(row.raised_cents) || 0));
+    const status = String(row.funding_status || "open").toLowerCase();
+    if (status === "open" && raised > 0) {
+      return json(
+        { detail: "Refund donors or wait until you can withdraw before deleting a funded goal." },
+        409,
+      );
+    }
     await env.DB.prepare(`UPDATE rg_goals SET deleted_at = ?, updated_at = ? WHERE id = ? AND user_id = ?`)
       .bind(new Date().toISOString(), new Date().toISOString(), goalId, userId)
       .run();
@@ -456,6 +589,45 @@ export async function handleGoalById(
   }
 
   return json({ detail: "Method not allowed" }, 405);
+}
+
+export async function handleGoalProvision(
+  request: Request,
+  env: GoalsEnv,
+  userId: string,
+  goalId: string,
+  ctx?: ExecutionContext,
+): Promise<Response> {
+  if (request.method !== "POST") return json({ detail: "Method not allowed" }, 405);
+  const body = record(await request.json().catch(() => ({})));
+  const img = parseImagePayload(body);
+  if (img) {
+    await storeGoalImage(env, goalId, img.bytes, img.contentType);
+  }
+  try {
+    const row = await provisionGoalFunding(env, userId, goalId, ctx);
+    return json({ goal: goalPayload(row, env) });
+  } catch (e) {
+    return json({ detail: e instanceof Error ? e.message : String(e) }, 400);
+  }
+}
+
+export async function handleGoalImagePost(
+  request: Request,
+  env: GoalsEnv,
+  userId: string,
+  goalId: string,
+): Promise<Response> {
+  if (request.method !== "POST") return json({ detail: "Method not allowed" }, 405);
+  const owned = await env.DB.prepare(`SELECT id FROM rg_goals WHERE id = ? AND user_id = ? AND deleted_at IS NULL`)
+    .bind(goalId, userId)
+    .first();
+  if (!owned) return json({ detail: "Goal not found." }, 404);
+  const body = record(await request.json().catch(() => ({})));
+  const img = parseImagePayload(body);
+  if (!img) return json({ detail: "image_base64 required (image/*, max ~400KB)." }, 400);
+  const url = await storeGoalImage(env, goalId, img.bytes, img.contentType);
+  return json({ ok: true, image_url: url });
 }
 
 export async function handleGoalAiRefresh(

@@ -1,5 +1,0 @@
-Project: rootrecord-site (solana-rootrecord-site)
-Canonical on OptiPlex SSD: /home/ava-core/ava/workstations/rootrecord/solana-rootrecord-site
-Pointer: /home/ava-core/ava/workstations/projects/rootrecord-site/ssd-source
-Staged Powered-by Ava patches live alongside in this projects folder (*.staged).
-Legacy E /mnt/e pointers retired 2026-08-06.

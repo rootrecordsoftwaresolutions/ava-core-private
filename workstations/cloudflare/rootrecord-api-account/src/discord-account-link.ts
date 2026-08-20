@@ -47,7 +47,7 @@ async function discordGetMe(accessToken: string): Promise<Record<string, unknown
 const VERIFY_STATE_PREFIX = "v";
 
 function returnPageUrl(site: string, state: string, query?: string): string {
-  const root = String(site || "https://rootrecord.info").trim().replace(/\/+$/, "");
+  const root = String(site || "https://rootrecord.online").trim().replace(/\/+$/, "");
   const path = state.startsWith(VERIFY_STATE_PREFIX) ? "/discord-verify" : "/account";
   const base = `${root}${path}`;
   return query ? `${base}?${query}` : base;
@@ -182,7 +182,7 @@ export async function discordLinkStart(params: {
   const reqUrl = new URL(params.request.url);
   const cid = String(params.env.DISCORD_CLIENT_ID || "").trim();
   const secret = String(params.env.DISCORD_CLIENT_SECRET || "").trim();
-  const site = String(params.env.SITE_URL || "https://rootrecord.info").trim().replace(/\/+$/, "");
+  const site = String(params.env.SITE_URL || "https://rootrecord.online").trim().replace(/\/+$/, "");
   if (!cid || cid.length < 6 || !secret || secret.length < 10) {
     return json({ detail: "Discord linking is not configured yet." }, 503);
   }
@@ -356,7 +356,7 @@ export async function discordLinkCallback(params: {
   const code = String(url.searchParams.get("code") || "").trim();
   const state = String(url.searchParams.get("state") || "").trim();
   const err = String(url.searchParams.get("error") || "").trim();
-  const site = String(params.env.SITE_URL || "https://rootrecord.info").trim().replace(/\/+$/, "");
+  const site = String(params.env.SITE_URL || "https://rootrecord.online").trim().replace(/\/+$/, "");
 
   try {
     if (err) return Response.redirect(returnPageUrl(site, state, "discord=error"), 302);

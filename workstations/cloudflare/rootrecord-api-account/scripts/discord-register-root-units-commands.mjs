@@ -406,7 +406,7 @@ console.log(`DISCORD_PUBLIC_KEY=${verifyKey}`);
 console.log(
   "--- REQUIRED: Developer Portal → ROOT ECONOMY APPLICATION → General Information → Interactions Endpoint URL ---",
 );
-console.log("https://rootrecord-api-account.rootrecord.workers.dev/v1/discord/economy/interactions");
+console.log("https://api.rootrecord.online/v1/discord/economy/interactions");
 
 const putRes = await fetch(`${API}/applications/${encodeURIComponent(appId)}/guilds/${encodeURIComponent(guildId)}/commands`, {
   method: "PUT",

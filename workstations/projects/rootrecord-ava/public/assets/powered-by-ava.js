@@ -54,10 +54,10 @@
     s.textContent =
       ".powered-by-ava{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:.45rem .75rem;" +
       "padding:.65rem 1rem;font:500 12px/1.4 system-ui,Segoe UI,sans-serif;letter-spacing:.02em;" +
-      "color:#8aa394;background:rgba(10,17,14,.92);border-top:1px solid rgba(110,231,168,.18)}" +
-      ".powered-by-ava .pba-link{color:#6ee7a8;text-decoration:none;font-weight:650}" +
+      "color:#7a92a8;background:rgba(0,13,26,.92);border-top:1px solid rgba(0,229,255,.18)}" +
+      ".powered-by-ava .pba-link{color:#00e5ff;text-decoration:none;font-weight:650}" +
       ".powered-by-ava .pba-link:hover{text-decoration:underline}" +
-      ".powered-by-ava .pba-metrics{color:#c5d6cb;font-variant-numeric:tabular-nums}" +
+      ".powered-by-ava .pba-metrics{color:#c8d8e8;font-variant-numeric:tabular-nums}" +
       ".powered-by-ava .pba-pipe{opacity:.45;padding:0 .15rem}" +
       ".powered-by-ava .pba-sep{opacity:.35}";
     document.head.appendChild(s);

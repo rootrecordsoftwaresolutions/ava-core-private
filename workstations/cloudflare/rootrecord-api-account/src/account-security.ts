@@ -46,7 +46,7 @@ const ACCOUNT_CHANGE_TTL_MS = 15 * 60_000;
 export const RECENT_ACCOUNT_VERIFICATION_MS = 15 * 60_000;
 
 function siteUrl(env: { SITE_URL?: string }): string {
-  return String(env.SITE_URL || "https://rootrecord.info").trim().replace(/\/+$/, "");
+  return String(env.SITE_URL || "https://rootrecord.online").trim().replace(/\/+$/, "");
 }
 
 function normalizeEmail(email: string): string {

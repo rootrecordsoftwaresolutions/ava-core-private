@@ -78,12 +78,12 @@ const embed = {
     },
     {
       name: "Verified RootRecord users",
-      value: "Link at https://rootrecord.info/discord-verify. ROOTS **`/bal`** and **`/send`** are on the **Root Economy** bot (separate invite).",
+      value: "Link at https://rootrecord.online/discord-verify. ROOTS **`/bal`** and **`/send`** are on the **Root Economy** bot (separate invite).",
       inline: false,
     },
     {
       name: "Products",
-      value: "https://rootrecord.info/products",
+      value: "https://rootrecord.online/products",
       inline: false,
     },
   ],

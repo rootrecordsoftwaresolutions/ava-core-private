@@ -14,6 +14,6 @@ We refined how AI hazard reports are built so they stay focused on what matters 
 **Why**
 A recent brief included a routine Cascades Volcano Observatory summary that was unrelated to Kīlauea. That noise is now filtered at the source and in the AI prompt.
 
-Questions or feedback? Reply here or use in-app feedback. Charts and report archive: https://rootrecord.info/charts/big-island-earthquakes/
+Questions or feedback? Reply here or use in-app feedback. Charts and report archive: https://rootrecord.online/charts/big-island-earthquakes/
 
 — RootRecord · Kīlauea Alerts

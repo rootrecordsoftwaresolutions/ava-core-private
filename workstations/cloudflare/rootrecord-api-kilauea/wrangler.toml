@@ -1,7 +1,7 @@
 # Per-app API Worker (full copy of `rootrecord-primary` source). Same D1 + R2 bindings. No first-party Worker crons for Kīlauea (USGS/device work is in the Android app). `WORKER_SHARD` for clarity only.
 #
-# Production: attach **https://api-kilauea.rootrecord.info** to this Worker (Custom Domains / Routes) for the Kīlauea web app default (`VITE_ROOTRECORD_API_ORIGIN` / hostname detection).
-# SSO cookies require API hosts under `*.rootrecord.info` (see `web-sso.ts`). Until then, set **VITE_ROOTRECORD_API_ORIGIN** on Kīlauea Pages to **https://rootrecord-api-kilauea.rootrecord.workers.dev**.
+# Production: attach **https://api.rootrecord.online** to this Worker (Custom Domains / Routes) for the Kīlauea web app default (`VITE_ROOTRECORD_API_ORIGIN` / hostname detection).
+# SSO cookies require API hosts under `*.rootrecord.info` (see `web-sso.ts`). Until then, set **VITE_ROOTRECORD_API_ORIGIN** on Kīlauea Pages to **https://api.rootrecord.online**.
 #
 # Secrets: JWT_SECRET (set by deploy.ps1 from credentials.env, optional Web/main/.env, and/or gitignored .deploy-* files).
 #
@@ -40,7 +40,7 @@ name = "EMAIL"
 
 [vars]
 WORKER_SHARD = "kilauea"
-SITE_URL = "https://rootrecord.info"
+SITE_URL = "https://rootrecord.online"
 EMAIL_FROM = "RootRecord <root@rootrecord.info>"
 DISCORD_GUILD_ID = "1497039564345442406"
 DISCORD_KILAUEA_CLIENT_ID = "1510049729776713728"

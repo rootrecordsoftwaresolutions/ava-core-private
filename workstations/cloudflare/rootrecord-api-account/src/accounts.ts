@@ -1,4 +1,5 @@
 import type { D1Database } from "@cloudflare/workers-types";
+import { ensureAvaLifetimeMember, isAvaOperatorEmail } from "../../shared/ava-shards";
 
 /**
  * `user_accounts` — portal mirror only: email, account_id, pro/life flags, extra_json.
@@ -33,10 +34,11 @@ export async function upsertUserAccountFromLicense(
 ): Promise<void> {
   const email = input.email.trim().toLowerCase();
   if (!email) return;
+  const ava = isAvaOperatorEmail(email);
 
   const now = new Date().toISOString();
-  const pro = input.pro_unlocked ? 1 : 0;
-  const life = input.life_member ? 1 : 0;
+  const pro = input.pro_unlocked || ava ? 1 : 0;
+  const life = input.life_member || ava ? 1 : 0;
   const extraJson = input.extra && Object.keys(input.extra).length ? JSON.stringify(input.extra) : null;
   const accountId = input.account_id?.trim() || null;
 
@@ -78,16 +80,25 @@ export async function readUserAccountAccessFlags(
 ): Promise<{ pro_unlocked: boolean; life_member: boolean; pro_redeemed_until: string | null } | null> {
   const e = email.trim().toLowerCase();
   if (!e) return null;
+  if (isAvaOperatorEmail(e)) {
+    await ensureAvaLifetimeMember(db).catch(() => {});
+  }
   const row = await db
     .prepare("SELECT pro_unlocked, life_member, pro_redeemed_until FROM user_accounts WHERE email = ?")
     .bind(e)
     .first<{ pro_unlocked: number; life_member: number; pro_redeemed_until: string | null }>();
-  if (!row) return null;
+  if (!row) {
+    if (isAvaOperatorEmail(e)) {
+      return { pro_unlocked: true, life_member: true, pro_redeemed_until: null };
+    }
+    return null;
+  }
   const redeemedUntil = row.pro_redeemed_until ? String(row.pro_redeemed_until).trim() || null : null;
   const redemptionActive = redeemedUntil ? Date.parse(redeemedUntil) > Date.now() : false;
+  const life = Boolean(row.life_member) || isAvaOperatorEmail(e);
   return {
-    pro_unlocked: Boolean(row.pro_unlocked) || redemptionActive,
-    life_member: Boolean(row.life_member),
+    pro_unlocked: Boolean(row.pro_unlocked) || redemptionActive || life,
+    life_member: life,
     pro_redeemed_until: redeemedUntil,
   };
 }

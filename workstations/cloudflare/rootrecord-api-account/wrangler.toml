@@ -70,6 +70,8 @@ ACCUWEATHER_REUSE_RADIUS_MILES = "25"
 STRIPE_PRICE_ID = "price_1TQIpzIaRpbMiAov5g5iTPh9"
 # Annual Visiting Hawaiʻi sponsored listing ($100/year). Create in Stripe Dashboard, then set:
 # STRIPE_VISITING_HAWAII_SPONSORED_PRICE_ID = "price_..."
+# Website Hosting ($10/mo after trial). See README-website-hosting.md.
+STRIPE_WEBSITE_HOSTING_PRICE_ID = "price_1U6dvzIaRpbMiAovPQX32MpZ"
 # Stripe Pricing Table (same ids as rootrecord-website Pages Billing; optional here for parity / future use).
 STRIPE_PRICING_TABLE_ID = "prctbl_1TQJ0kIaRpbMiAovAUe3X3QJ"
 STRIPE_PUBLISHABLE_KEY = "pk_live_51T3sezIaRpbMiAov6SUJgKLGR1igmRGOYg1rY1hKJPAWxLXDgJR7kRNSBSM8sJ2Wat1zuC56iE4TCTyPfqmEfTT600cR21LwYA"
@@ -79,7 +81,7 @@ STRIPE_PUBLISHABLE_KEY = "pk_live_51T3sezIaRpbMiAov6SUJgKLGR1igmRGOYg1rY1hKJPAWx
 #   wrangler secret put RRTT_TREASURY_SECRET_KEY_B58
 # ROOTS minting + automated treasury Raydium LP + Discord developer feed: Worker `rootrecord-solana-tx` (plain var, no trailing slash):
 ROOTRECORD_SOLANA_TX_URL = "https://rootrecord-solana-tx.rootrecord.workers.dev"
-ROOTRECORD_API_KILAUEA_URL = "https://rootrecord-api-kilauea.rootrecord.workers.dev"
+ROOTRECORD_API_KILAUEA_URL = "https://api.rootrecord.online"
 RRTT_MINT_BASE58 = "6KfGKe13ASrV5WHvChbapQXxxEFRNqwpwrdEVsX6RQMT"
 RRTT_DECIMALS = "9"
 # Max wait for custodial balance Solana RPC on `/auth/me` + `/earn/summary` (see custodial-onchain-cache.ts).
@@ -153,7 +155,7 @@ DISCORD_ROOTS_BUY_CHANNEL_ID = "1505853241915736154"
 # Optional SPL top-up when LP withdraw is not enough: `wrangler secret put TREASURY_MAINTENANCE_SOURCE_SECRET_KEY_B58`
 #   (Phantom-style base58 secret; pubkey must differ from treasury).
 #   powershell -NoProfile -File ./provision-custodial-backfill.ps1
-#   (defaults to https://rootrecord-api-account.rootrecord.workers.dev unless ROOTRECORD_ACCOUNT_API / ROOTRECORD_PRIMARY_API is set in credentials.env)
+#   (defaults to https://api.rootrecord.online unless ROOTRECORD_ACCOUNT_API / ROOTRECORD_PRIMARY_API is set in credentials.env)
 #
 # All-device FCM broadcast (POST /api/internal/push-broadcast):
 #   wrangler secret put RR_PUSH_ADMIN_SECRET

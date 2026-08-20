@@ -82,7 +82,7 @@ export async function transferRrttCustodialPeerViaTreasury(
   if (!fromPkStr || !toPkStr) {
     return {
       ok: false,
-      message: "One of you does not have a deposit wallet yet — sign in at **https://rootrecord.info/account.html** once.",
+      message: "One of you does not have a deposit wallet yet — sign in at **https://rootrecord.online/account.html** once.",
     };
   }
 

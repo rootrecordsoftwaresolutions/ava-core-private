@@ -156,7 +156,7 @@ console.log(
 );
 console.log("");
 console.log("Interactions endpoint (Global Updater application only):");
-console.log("https://rootrecord-api-account.rootrecord.workers.dev/v1/discord/interactions");
+console.log("https://api.rootrecord.online/v1/discord/interactions");
 console.log("");
 console.log("Ops broadcast: POST /api/internal/discord-updates-broadcast");
 console.log('  { "category": "blocknotes", "content": "…", "embeds": […] }');

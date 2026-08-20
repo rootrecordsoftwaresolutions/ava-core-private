@@ -48,10 +48,10 @@ if (!token) {
 const msg =
   "**Verify your RootRecord account**\n\n" +
   "To chat in this server, link your Discord to your RootRecord portal account:\n\n" +
-  "1) Create / sign in to your account: https://rootrecord.info/account.html\n" +
+  "1) Create / sign in to your account: https://rootrecord.online/account.html\n" +
   "2) Click **Link Discord** and authorize\n" +
   "3) You will automatically receive **@Verified** and can message.\n\n" +
-  "Need an account? https://rootrecord.info/account-signup.html\n\n" +
+  "Need an account? https://rootrecord.online/account-signup.html\n\n" +
   `Invite link: ${invite}\n`;
 
 const res = await fetch(`https://discord.com/api/v10/channels/${encodeURIComponent(channelId)}/messages`, {

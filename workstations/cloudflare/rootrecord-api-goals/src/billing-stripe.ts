@@ -26,8 +26,8 @@ export async function createStripeSubscriptionCheckout(params: {
   siteUrl: string;
 }): Promise<{ ok: true; url: string } | { ok: false; message: string }> {
   const site = params.siteUrl.replace(/\/+$/, "");
-  const successUrl = `${site}/billing.html?checkout=success`;
-  const cancelUrl = `${site}/billing.html?checkout=cancel`;
+  const successUrl = `${site}/memberships?checkout=success`;
+  const cancelUrl = `${site}/memberships?checkout=cancel`;
 
   const body = new URLSearchParams();
   body.set("mode", "subscription");

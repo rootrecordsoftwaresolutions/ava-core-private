@@ -95,8 +95,8 @@ function ledgerFromWholeRoots(whole: number | null): number | null {
   const atomic = Math.round(whole * 100_000_000);
   return atomic > 0 ? atomic : null;
 }
-const DISCORD_VERIFY_URL = "https://rootrecord.info/discord-verify";
-const ACCOUNT_URL = "https://rootrecord.info/account";
+const DISCORD_VERIFY_URL = "https://rootrecord.online/discord-verify";
+const ACCOUNT_URL = "https://rootrecord.online/account";
 
 type DiscordSendAsset = "ROOTS" | "RRTT" | "SOL";
 
@@ -3063,11 +3063,11 @@ async function collectScreenshotReportData(env: DiscordRootUnitsEnv, requesterDi
       fetchRootRecordReddit(),
       Promise.all(
         [
-          "https://rootrecord.info/",
-          "https://rootrecord.info/products/rootunits/",
-          "https://rootrecord.info/beta-tester-rewards.html",
-          "https://rootrecord.info/charts/root-economy/",
-          "https://rootrecord.info/products.html",
+          "https://rootrecord.online/",
+          "https://rootrecord.online/products/rootunits/",
+          "https://rootrecord.online/beta-tester-rewards.html",
+          "https://rootrecord.online/charts/root-economy/",
+          "https://rootrecord.online/products.html",
         ].map(fetchRootRecordPageSummary),
       ),
       dbFirst(env.DB, `SELECT COUNT(*) AS total_accounts FROM license_accounts`),

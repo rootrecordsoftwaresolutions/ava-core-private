@@ -1,4 +1,0 @@
-Project: rootrecord-api-weather
-Canonical on OptiPlex SSD: /home/ava-core/ava/workstations/cloudflare/rootrecord-api-weather
-Pointer: /home/ava-core/ava/workstations/projects/rootrecord-api-weather/ssd-source
-Legacy E /mnt/e pointers retired 2026-08-06 — Ava runs without external drive.

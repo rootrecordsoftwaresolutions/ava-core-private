@@ -9,7 +9,7 @@
  *   DISCORD_ECONOMY_CLIENT_ID  (or DISCORD_ECONOMY_CLIENT_ID in wrangler.toml [vars])
  *
  * Interactions endpoint (Economy application → General Information):
- *   https://rootrecord-api-account.rootrecord.workers.dev/v1/discord/economy/interactions
+ *   https://api.rootrecord.online/v1/discord/economy/interactions
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -203,7 +203,7 @@ if (!putRes.ok) {
 console.log("Registered global Root Economy commands:", putText.slice(0, 400));
 console.log("");
 console.log("Interactions endpoint:");
-console.log("https://rootrecord-api-account.rootrecord.workers.dev/v1/discord/economy/interactions");
+console.log("https://api.rootrecord.online/v1/discord/economy/interactions");
 console.log("");
 console.log("Invite:");
 console.log(

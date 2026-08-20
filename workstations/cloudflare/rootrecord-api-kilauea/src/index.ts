@@ -6,6 +6,7 @@ import { runNoaaAlertCron } from "./noaa-alert-cron";
 import { runUsgsKilaueaDiscordCron } from "./usgs-discord-cron";
 import { runKilaueaAiAnalysisCron } from "./kilauea-ai-analysis";
 import { runKilaueaVolcanoNoticePushCron } from "./kilauea-volcano-notice-push-cron";
+import { runD1RetentionCron } from "./d1-retention";
 
 type WorkerShard = "primary" | "weather" | "business" | "account" | "token" | "kilauea";
 
@@ -63,6 +64,8 @@ export default {
         runUsgsKilaueaDiscordCron(env),
         runKilaueaAiAnalysisCron(env),
         runKilaueaVolcanoNoticePushCron(env),
+        // Shares the `root-record` D1 with the auth Workers, so a full database breaks sign-in too.
+        runD1RetentionCron(env),
       ]);
       for (const r of results) {
         if (r.status === "rejected") console.warn("kilauea_cron_failed", String(r.reason));

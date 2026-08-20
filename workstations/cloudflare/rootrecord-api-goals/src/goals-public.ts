@@ -2,6 +2,7 @@ import type { D1Database } from "@cloudflare/workers-types";
 
 import { json } from "./cors";
 import { AI_DISCLAIMER } from "./goals-ai";
+import { publicGoalPage } from "./goal-funding";
 
 function str(v: unknown): string {
   return typeof v === "string" ? v.trim() : "";
@@ -18,14 +19,12 @@ function publicGoalCard(row: Record<string, unknown>) {
 }
 
 function publicGoalDetail(row: Record<string, unknown>) {
-  return {
-    ...publicGoalCard(row),
+  return publicGoalPage(row, {
     user_steps_summary: row.user_steps_summary,
-    estimated_cost_cents: row.estimated_cost_cents,
     ai_plan: row.ai_plan_json ? JSON.parse(String(row.ai_plan_json)) : null,
     min_days: row.min_days,
     max_days: row.max_days,
-  };
+  });
 }
 
 async function userIdForSolanaAddress(db: D1Database, address: string): Promise<string | null> {

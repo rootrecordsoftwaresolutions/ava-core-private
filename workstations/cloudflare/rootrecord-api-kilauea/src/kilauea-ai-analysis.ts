@@ -12,6 +12,7 @@ import {
   slimEarthquakeContextForAi,
   type EarthquakeActivitySummary,
 } from "./kilauea-earthquake-stats";
+import { archiveContextJson } from "./kilauea-archive-context";
 import {
   fetchOfficialKilaueaXUpdates,
   filterKilaueaRelevantOfficialXPosts,
@@ -124,6 +125,13 @@ function publicReportText(raw: unknown, max: number): string {
     String(raw ?? "")
       .replace(/\bGrok\b/gi, "AI")
       .replace(/\bxAI\b/g, "AI")
+      .replace(/\bAva Ivy\b/gi, "")
+      .replace(/\bAva\b/g, "")
+      .replace(/\bOptiPlex\b/gi, "")
+      .replace(/\bRoot Server\b/gi, "")
+      .replace(/\bMariaDB\b/gi, "")
+      .replace(/\bCursor\b/g, "")
+      .replace(/\s{2,}/g, " ")
       .trim(),
     max,
   );
@@ -539,6 +547,9 @@ async function insertReport(
   const nowIso = ctx.generated_at;
   const freeText = str(ai.free_text) || "AI analysis did not return a public preview.";
   const proText = str(ai.pro_text) || "AI analysis did not return a Pro continuation.";
+  // Bounded copy only — the same context is stored once per trigger, and the unslimmed blobs
+  // filled D1 to its 500MB cap twice. Full payload goes to the Discord raw archive instead.
+  const archiveJson = archiveContextJson(ctx as unknown as Record<string, unknown>);
   await env.DB.prepare(
     `INSERT INTO kilauea_ai_analyses
      (id, source_type, source_id, source_time, severity, event, magnitude, headline, url,
@@ -559,7 +570,7 @@ async function insertReport(
       freeText,
       proText,
       str(ai.model) || null,
-      jsonForArchive(ctx),
+      archiveJson,
       jsonForArchive(ai),
       prior?.id || null,
       nowIso,
@@ -594,7 +605,11 @@ async function postReportToDiscord(env: AiEnv, row: AnalysisRow): Promise<void> 
   }
 }
 
-async function archiveRawAiDataToDiscord(env: AiEnv, row: AnalysisRow): Promise<void> {
+async function archiveRawAiDataToDiscord(
+  env: AiEnv,
+  row: AnalysisRow,
+  fullPrompt?: unknown,
+): Promise<void> {
   const channelId = String(env.DISCORD_KILAUEA_AI_ARCHIVE_CHANNEL_ID || "1507597139465867364").trim();
   const token = String(env.DISCORD_KILAUEA_BOT_TOKEN || env.DISCORD_BOT_TOKEN || "").replace(/^bot\s+/i, "").trim();
   if (!/^\d{10,}$/.test(channelId) || token.length < 40) return;
@@ -604,7 +619,8 @@ async function archiveRawAiDataToDiscord(env: AiEnv, row: AnalysisRow): Promise<
     source_id: row.source_id,
     headline: row.headline,
     created_at: row.created_at,
-    prompt: JSON.parse(row.prompt_json || "{}"),
+    // D1 stores a capped context, so archive the caller's full context when it is available.
+    prompt: fullPrompt ?? JSON.parse(row.prompt_json || "{}"),
     response: JSON.parse(row.response_json || "{}"),
   };
   const form = new FormData();
@@ -647,7 +663,7 @@ export async function runKilaueaAiAnalysisCron(env: AiEnv): Promise<void> {
     const row = await insertReport(env, trigger, prior, ctx, ai);
     if (row) {
       await postReportToDiscord(env, row).catch((e) => console.warn("kilauea_ai_discord", String(e)));
-      await archiveRawAiDataToDiscord(env, row);
+      await archiveRawAiDataToDiscord(env, row, ctx).catch((e) => console.warn("kilauea_ai_archive", String(e)));
     }
   }
 }
@@ -693,7 +709,7 @@ export async function runKilaueaAiManualReport(
   const row = await insertReport(env, trigger, prior, ctx, ai);
   if (row) {
     await postReportToDiscord(env, row).catch((e) => console.warn("kilauea_ai_manual_discord", String(e)));
-    await archiveRawAiDataToDiscord(env, row);
+    await archiveRawAiDataToDiscord(env, row, ctx).catch((e) => console.warn("kilauea_ai_manual_archive", String(e)));
   }
   return row;
 }
@@ -705,22 +721,28 @@ export async function handleKilaueaAiManualRun(request: Request, env: AiEnv): Pr
   } catch {
     body = {};
   }
-  const row = await runKilaueaAiManualReport(env, String(body.requested_by_discord_id || ""));
-  return json(
-    {
-      ok: Boolean(row),
-      report: row
-        ? {
-            id: row.id,
-            headline: row.headline,
-            source_type: row.source_type,
-            created_at: row.created_at,
-            discord_posted_at: row.discord_posted_at,
-          }
-        : null,
-    },
-    row ? 200 : 500,
-  );
+  try {
+    const row = await runKilaueaAiManualReport(env, String(body.requested_by_discord_id || ""));
+    return json(
+      {
+        ok: Boolean(row),
+        report: row
+          ? {
+              id: row.id,
+              headline: row.headline,
+              source_type: row.source_type,
+              created_at: row.created_at,
+              discord_posted_at: row.discord_posted_at,
+            }
+          : null,
+      },
+      row ? 200 : 500,
+    );
+  } catch (e) {
+    const detail = e instanceof Error ? e.message : String(e);
+    console.error(JSON.stringify({ msg: "kilauea_ai_manual_run_failed", v: 1, err: detail.slice(0, 800) }));
+    return json({ ok: false, detail: detail.slice(0, 500) }, 500);
+  }
 }
 
 async function isProRequest(request: Request, env: AiEnv): Promise<boolean | Response> {
