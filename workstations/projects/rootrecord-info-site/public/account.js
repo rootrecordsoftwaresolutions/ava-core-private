@@ -952,7 +952,7 @@
     if (rows.length === 0) {
       box.innerHTML =
         '<p class="note" style="margin:0">No linked apps yet. When you sign in inside a RootRecord app and we see saved data, notifications, or synced weather for this account, it will appear here.</p>' +
-        '<p style="margin-top:1rem"><a class="btn btn-secondary" href="/products.html">Browse products</a></p>' +
+        '<p style="margin-top:1rem"><a class="btn btn-secondary" href="/products">Browse products</a></p>' +
         '<p class="note" style="margin-top:1rem">Google Play: <a href="https://play.google.com/store/apps/details?id=com.rootrecord.businessmanager" target="_blank" rel="noopener">Business Manager</a> &middot; <a href="https://play.google.com/store/apps/details?id=com.rootrecord.weathermanager" target="_blank" rel="noopener">Weather Manager</a> &middot; <a href="https://play.google.com/store/apps/details?id=com.rootrecord.kilauea" target="_blank" rel="noopener">Kilauea Alerts</a></p>';
       return;
     }
