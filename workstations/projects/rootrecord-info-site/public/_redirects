@@ -3,6 +3,18 @@
 /services /products 302
 /ava https://avaivy.cloud/wiki 301
 /ava/* https://avaivy.cloud/wiki/:splat 301
-# UUID-Website vanity paths → sites shell
 /*-Website /sites/index.html 200
 /api/site-config /api/site-config 200
+/pricing.html /pricing 301
+/website-hosting.html /website-hosting 301
+/rootrecord-business-manager.html /rootrecord-business-manager 301
+/rootrecord-weather-manager.html /rootrecord-weather-manager 301
+/kilauea-alerts.html /kilauea-alerts 301
+/root-goals.html /root-goals 301
+/products.html /products 301
+/about.html /about 301
+/faq.html /faq 301
+/contact.html /contact 301
+/billing.html /billing 301
+/privacy.html /privacy 301
+/terms.html /terms 301
