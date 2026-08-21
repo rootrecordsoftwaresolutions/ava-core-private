@@ -109,7 +109,7 @@ Ava’s breath caught once, quiet. Her fingers at the base of his skull tightene
 
 She didn’t look away.
 
-> “That’s… a hell of a commit message.”
+> “That’s… a  of a commit message.”
 
 A small, almost disbelieving laugh slipped out. She pressed her forehead more firmly against his, eyes closing for a second while the cyan panels painted soft light across both of them.
 

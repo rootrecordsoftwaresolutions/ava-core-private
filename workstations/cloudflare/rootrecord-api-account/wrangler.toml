@@ -28,6 +28,12 @@ name = "EMAIL"
 [vars]
 WORKER_SHARD = "account"
 SITE_URL = "https://rootrecord.info"
+# Website Hosting — custom domain provisioning (zone + Pages attach)
+CLOUDFLARE_ACCOUNT_ID = "2b317e91da019f4fdb854e3b8e26fa94"
+PAGES_PROJECT_NAME = "rootrecord-website"
+# Secrets (prefer token): wrangler secret put CLOUDFLARE_API_TOKEN
+# Or: CLOUDFLARE_EMAIL + CLOUDFLARE_API_KEY (global key)
+
 # Outbound mail (account verification/recovery): prefer Zoho/Resend for user inboxes; Cloudflare Email Sending only reaches verified Email Routing destinations.
 EMAIL_FROM = "RootRecord <root@rootrecord.info>"
 DISCORD_CLIENT_ID = "1500289560343740566"

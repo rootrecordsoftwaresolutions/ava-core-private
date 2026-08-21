@@ -1,12 +1,16 @@
 /**
- * Website Hosting API (scaffold).
+ * Website Hosting API.
  * Auth: license_accounts sessions via sessionFromRequest (same as Visiting Hawaiʻi).
- * Stripe live keys are optional — create starts a local trial; checkout wires later.
+ * Create requires sign-in. Recurring $10/mo via Stripe Checkout (website_hosting product).
  */
 
 import type { D1Database } from "@cloudflare/workers-types";
 import { json } from "./cors";
 import { sessionFromRequest, extractAuthToken, type AuthEnv } from "./primary-auth";
+import {
+  createWebsiteHostingCheckout,
+  websiteHostingCheckoutAvailable,
+} from "./billing-stripe";
 
 export type SitesEnv = AuthEnv & {
   DB: D1Database;
@@ -14,6 +18,11 @@ export type SitesEnv = AuthEnv & {
   /** Recurring Price id for Website Hosting ($10/mo). Optional for scaffold. */
   STRIPE_WEBSITE_HOSTING_PRICE_ID?: string;
   STRIPE_SECRET_KEY?: string;
+  CLOUDFLARE_ACCOUNT_ID?: string;
+  PAGES_PROJECT_NAME?: string;
+  CLOUDFLARE_API_TOKEN?: string;
+  CLOUDFLARE_API_KEY?: string;
+  CLOUDFLARE_EMAIL?: string;
 };
 
 type SiteRow = {
@@ -45,7 +54,8 @@ type InvoiceRow = {
 
 const TRIAL_DAYS = 14;
 const MONTHLY_CENTS = 1000;
-const CF_NS_PLACEHOLDERS = ["ns1.cloudflare.com", "ns2.cloudflare.com"] as const;
+/** Fallback NS shown before zone provisioning returns zone-specific values. */
+const CF_NS_DEFAULT = ["anahi.ns.cloudflare.com", "yoxall.ns.cloudflare.com"] as const;
 
 function clampText(raw: unknown, max: number): string {
   return String(raw ?? "")
@@ -65,6 +75,8 @@ function parseConfig(raw: string | null | undefined): Record<string, unknown> {
 function siteAccessActive(row: SiteRow, now = new Date()): boolean {
   const status = String(row.subscription_status || "").toLowerCase();
   if (status === "active") return true;
+  // incomplete = created, awaiting $10/mo Website Hosting subscription — still editable
+  if (status === "incomplete") return true;
   if (status === "trialing") {
     if (!row.trial_ends_at) return true;
     const ends = Date.parse(row.trial_ends_at);
@@ -82,8 +94,30 @@ function publicPathFor(row: SiteRow, siteUrl: string): string {
   return `${base}/${encodeURIComponent(row.id)}-Website`;
 }
 
+function hostingMeta(cfg: Record<string, unknown>): {
+  nameservers?: string[];
+  zoneId?: string;
+  pagesDomain?: string;
+} {
+  const h = cfg._hosting;
+  if (!h || typeof h !== "object" || Array.isArray(h)) return {};
+  const o = h as Record<string, unknown>;
+  const ns = Array.isArray(o.nameservers)
+    ? o.nameservers.map((x) => String(x)).filter(Boolean)
+    : undefined;
+  return {
+    nameservers: ns,
+    zoneId: o.zoneId ? String(o.zoneId) : undefined,
+    pagesDomain: o.pagesDomain ? String(o.pagesDomain) : undefined,
+  };
+}
+
 function rowToOwner(row: SiteRow, siteUrl: string) {
   const active = siteAccessActive(row);
+  const cfg = parseConfig(row.config_json);
+  const host = hostingMeta(cfg);
+  const nameservers =
+    host.nameservers && host.nameservers.length >= 2 ? host.nameservers : [...CF_NS_DEFAULT];
   return {
     id: row.id,
     accountId: row.account_id,
@@ -91,11 +125,12 @@ function rowToOwner(row: SiteRow, siteUrl: string) {
     title: row.title,
     customDomain: row.custom_domain,
     nameserverStatus: row.nameserver_status,
-    nameservers: CF_NS_PLACEHOLDERS,
+    nameservers,
+    defaultDomain: true,
     trialEndsAt: row.trial_ends_at,
     subscriptionStatus: row.subscription_status,
     stripeSubscriptionId: row.stripe_subscription_id,
-    config: parseConfig(row.config_json),
+    config: cfg,
     accessActive: active,
     paywall: !active,
     publicUrl: publicPathFor(row, siteUrl),
@@ -103,6 +138,7 @@ function rowToOwner(row: SiteRow, siteUrl: string) {
     monthlyPriceCents: MONTHLY_CENTS,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
+    cfZoneId: host.zoneId || null,
   };
 }
 
@@ -123,7 +159,7 @@ function rowToPublic(row: SiteRow) {
     /** Free / trial keep attribution; paid removes it. */
     showBuiltByBanner: !paid,
     /** Trial CTA to convert. */
-    showBuildYourOwn: status === "trialing",
+    showBuildYourOwn: status === "trialing" || status === "incomplete",
     monthlyPriceCents: MONTHLY_CENTS,
   };
 }
@@ -254,7 +290,6 @@ async function handleCreate(request: Request, env: SitesEnv, sess: { accountId: 
       : { theme: "default", pages: [{ path: "/", title: "Home", body: "" }] };
 
   const now = new Date();
-  const trialEnds = new Date(now.getTime() + TRIAL_DAYS * 24 * 60 * 60 * 1000);
   const id = crypto.randomUUID();
   const created = now.toISOString();
 
@@ -264,14 +299,13 @@ async function handleCreate(request: Request, env: SitesEnv, sess: { accountId: 
         id, account_id, slug, title, custom_domain, nameserver_status,
         trial_ends_at, subscription_status, stripe_subscription_id, config_json,
         created_at, updated_at
-      ) VALUES (?, ?, ?, ?, NULL, 'none', ?, 'trialing', NULL, ?, ?, ?)`,
+      ) VALUES (?, ?, ?, ?, NULL, 'none', NULL, 'incomplete', NULL, ?, ?, ?)`,
     )
       .bind(
         id,
         sess.accountId,
         slug || null,
         title,
-        trialEnds.toISOString(),
         JSON.stringify(config),
         created,
         created,
@@ -290,11 +324,44 @@ async function handleCreate(request: Request, env: SitesEnv, sess: { accountId: 
   return json(
     {
       site: rowToOwner(row, env.SITE_URL || ""),
-      trialDays: TRIAL_DAYS,
-      note: "Trial started. Stripe subscription attaches after onboarding (see README-website-hosting.md).",
+      priceCents: MONTHLY_CENTS,
+      note: "Site created. Subscribe to Website Hosting ($10/mo) to keep it live on a recurring plan.",
+      checkoutAvailable: websiteHostingCheckoutAvailable(env),
     },
     201,
   );
+}
+
+async function handleCheckout(
+  env: SitesEnv,
+  sess: { accountId: string; email: string },
+  siteId: string,
+): Promise<Response> {
+  const row = await getSiteById(env.DB, siteId);
+  if (!row || row.account_id !== sess.accountId) return json({ detail: "Site not found." }, 404);
+
+  if (!websiteHostingCheckoutAvailable(env)) {
+    return json(
+      {
+        detail:
+          "Website Hosting checkout is not configured (STRIPE_SECRET_KEY + STRIPE_WEBSITE_HOSTING_PRICE_ID).",
+      },
+      503,
+    );
+  }
+
+  const priceId = String(env.STRIPE_WEBSITE_HOSTING_PRICE_ID || "").trim();
+  const secret = String(env.STRIPE_SECRET_KEY || "").trim();
+  const result = await createWebsiteHostingCheckout({
+    secretKey: secret,
+    priceId,
+    customerEmail: sess.email,
+    accountId: sess.accountId,
+    siteId: row.id,
+    siteUrl: env.SITE_URL || "https://rootrecord.info",
+  });
+  if (!result.ok) return json({ detail: result.message }, 502);
+  return json({ url: result.url, sessionId: result.sessionId, priceCents: MONTHLY_CENTS }, 200);
 }
 
 async function handleMe(env: SitesEnv, sess: { accountId: string }): Promise<Response> {
@@ -377,6 +444,147 @@ async function handlePatch(
   return json({ site: updated ? rowToOwner(updated, env.SITE_URL || "") : null }, 200);
 }
 
+type CfAuth =
+  | { kind: "token"; token: string }
+  | { kind: "key"; email: string; key: string };
+
+function cfAuthFromEnv(env: SitesEnv): CfAuth | null {
+  const token = String(env.CLOUDFLARE_API_TOKEN || "").trim();
+  if (token.length >= 20) return { kind: "token", token };
+  const email = String(env.CLOUDFLARE_EMAIL || "").trim();
+  const key = String(env.CLOUDFLARE_API_KEY || "").trim();
+  if (email && key.length >= 20) return { kind: "key", email, key };
+  return null;
+}
+
+function cfHeaders(auth: CfAuth): HeadersInit {
+  if (auth.kind === "token") {
+    return { Authorization: `Bearer ${auth.token}`, "Content-Type": "application/json" };
+  }
+  return {
+    "X-Auth-Email": auth.email,
+    "X-Auth-Key": auth.key,
+    "Content-Type": "application/json",
+  };
+}
+
+async function provisionDomainInCloudflare(
+  env: SitesEnv,
+  domain: string,
+): Promise<{
+  ok: boolean;
+  provisioned: boolean;
+  nameservers: string[];
+  zoneId?: string;
+  pagesAttached?: boolean;
+  detail?: string;
+}> {
+  const auth = cfAuthFromEnv(env);
+  const accountId = String(env.CLOUDFLARE_ACCOUNT_ID || "").trim();
+  const project = String(env.PAGES_PROJECT_NAME || "rootrecord-website").trim();
+  if (!auth || !accountId) {
+    return {
+      ok: true,
+      provisioned: false,
+      nameservers: [...CF_NS_DEFAULT],
+      detail:
+        "Domain saved. Cloudflare API credentials not configured on Worker — point nameservers to the Root Record NS below; ops can finish zone attach.",
+    };
+  }
+
+  const headers = cfHeaders(auth);
+  let zoneId = "";
+  let nameservers: string[] = [...CF_NS_DEFAULT];
+  let status = "pending";
+
+  // Existing zone?
+  const listRes = await fetch(
+    `https://api.cloudflare.com/client/v4/zones?name=${encodeURIComponent(domain)}&account.id=${encodeURIComponent(accountId)}`,
+    { headers },
+  );
+  const listJson = (await listRes.json().catch(() => ({}))) as {
+    success?: boolean;
+    result?: Array<{ id?: string; name_servers?: string[]; status?: string }>;
+    errors?: Array<{ message?: string }>;
+  };
+  if (listJson.success && Array.isArray(listJson.result) && listJson.result[0]?.id) {
+    zoneId = String(listJson.result[0].id);
+    if (Array.isArray(listJson.result[0].name_servers) && listJson.result[0].name_servers.length) {
+      nameservers = listJson.result[0].name_servers.map(String);
+    }
+    status = String(listJson.result[0].status || "pending");
+  } else {
+    const createRes = await fetch("https://api.cloudflare.com/client/v4/zones", {
+      method: "POST",
+      headers,
+      body: JSON.stringify({
+        name: domain,
+        account: { id: accountId },
+        jump_start: true,
+        type: "full",
+      }),
+    });
+    const createJson = (await createRes.json().catch(() => ({}))) as {
+      success?: boolean;
+      result?: { id?: string; name_servers?: string[]; status?: string };
+      errors?: Array<{ message?: string; code?: number }>;
+    };
+    if (!createJson.success || !createJson.result?.id) {
+      const err =
+        createJson.errors?.map((e) => e.message).filter(Boolean).join("; ") ||
+        "Cloudflare zone create failed.";
+      return {
+        ok: false,
+        provisioned: false,
+        nameservers: [...CF_NS_DEFAULT],
+        detail: err,
+      };
+    }
+    zoneId = String(createJson.result.id);
+    if (Array.isArray(createJson.result.name_servers) && createJson.result.name_servers.length) {
+      nameservers = createJson.result.name_servers.map(String);
+    }
+    status = String(createJson.result.status || "pending");
+  }
+
+  let pagesAttached = false;
+  try {
+    const pagesRes = await fetch(
+      `https://api.cloudflare.com/client/v4/accounts/${encodeURIComponent(accountId)}/pages/projects/${encodeURIComponent(project)}/domains`,
+      {
+        method: "POST",
+        headers,
+        body: JSON.stringify({ name: domain }),
+      },
+    );
+    const pagesJson = (await pagesRes.json().catch(() => ({}))) as {
+      success?: boolean;
+      errors?: Array<{ message?: string; code?: number }>;
+    };
+    //  already exists is fine
+    if (
+      pagesJson.success ||
+      (pagesJson.errors || []).some((e) => /already|exist/i.test(String(e.message || "")))
+    ) {
+      pagesAttached = true;
+    }
+  } catch {
+    /* Pages attach is best-effort; NS still works for ecosystem */
+  }
+
+  return {
+    ok: true,
+    provisioned: true,
+    nameservers,
+    zoneId,
+    pagesAttached,
+    detail:
+      status === "active"
+        ? "Domain is active in Cloudflare."
+        : "Zone created/linked. Point your registrar nameservers to the values returned, then wait for active.",
+  };
+}
+
 async function handleDomainPost(
   request: Request,
   env: SitesEnv,
@@ -386,7 +594,7 @@ async function handleDomainPost(
   const row = await getSiteById(env.DB, siteId);
   if (!row || row.account_id !== sess.accountId) return json({ detail: "Site not found." }, 404);
 
-  let body: { domain?: string } = {};
+  let body: { domain?: string; provision?: boolean } = {};
   try {
     body = (await request.json()) as typeof body;
   } catch {
@@ -401,13 +609,37 @@ async function handleDomainPost(
     return json({ detail: "Enter a valid domain (e.g. alexrs94.site)." }, 400);
   }
 
+  const provision = body.provision !== false;
+  const prov = provision
+    ? await provisionDomainInCloudflare(env, domain)
+    : {
+        ok: true,
+        provisioned: false,
+        nameservers: [...CF_NS_DEFAULT],
+        detail: "Domain saved (provision skipped).",
+      };
+
+  if (!prov.ok) {
+    return json({ detail: prov.detail || "Could not provision domain in Cloudflare." }, 502);
+  }
+
   const now = new Date().toISOString();
+  const cfg = parseConfig(row.config_json);
+  cfg._hosting = {
+    nameservers: prov.nameservers,
+    zoneId: prov.zoneId || null,
+    pagesDomain: domain,
+    pagesAttached: Boolean(prov.pagesAttached),
+    updatedAt: now,
+  };
+  const nsStatus = "pending";
+
   try {
     await env.DB.prepare(
-      `UPDATE rr_sites SET custom_domain = ?, nameserver_status = 'pending', updated_at = ?
+      `UPDATE rr_sites SET custom_domain = ?, nameserver_status = ?, config_json = ?, updated_at = ?
        WHERE id = ? AND account_id = ?`,
     )
-      .bind(domain, now, siteId, sess.accountId)
+      .bind(domain, nsStatus, JSON.stringify(cfg), now, siteId, sess.accountId)
       .run();
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
@@ -421,9 +653,14 @@ async function handleDomainPost(
   return json(
     {
       site: updated ? rowToOwner(updated, env.SITE_URL || "") : null,
-      nameservers: CF_NS_PLACEHOLDERS,
+      nameservers: prov.nameservers,
+      provisioned: prov.provisioned,
+      pagesAttached: Boolean(prov.pagesAttached),
       instructions:
-        "Point your domain’s nameservers to Cloudflare (shown above). Until DNS is live, use rootrecord.info/sites/<id>.",
+        "Custom domain is optional — your default Root Record URL already works. " +
+        "For this custom domain: at your registrar, set nameservers to the two values returned. " +
+        "Root Record Cloudflare will serve the site once DNS is active.",
+      detail: prov.detail,
     },
     200,
   );
@@ -522,6 +759,13 @@ export async function handleSitesRoutes(
     const sess = await requireSession(request, env);
     if (sess instanceof Response) return sess;
     return handleDomainPost(request, env, sess, decodeURIComponent(domainMatch[1]));
+  }
+
+  const checkoutMatch = path.match(/^\/sites\/([^/]+)\/checkout$/);
+  if (method === "POST" && checkoutMatch) {
+    const sess = await requireSession(request, env);
+    if (sess instanceof Response) return sess;
+    return handleCheckout(env, sess, decodeURIComponent(checkoutMatch[1]));
   }
 
   if (path.startsWith("/sites")) {

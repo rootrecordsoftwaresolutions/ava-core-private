@@ -118,3 +118,61 @@ export async function createVisitingHawaiiSponsoredCheckout(params: {
   }
   return { ok: true, url: data.url, sessionId: data.id };
 }
+
+export function websiteHostingCheckoutAvailable(env: {
+  STRIPE_SECRET_KEY?: string;
+  STRIPE_WEBSITE_HOSTING_PRICE_ID?: string;
+}): boolean {
+  return stripeConfigured(env.STRIPE_SECRET_KEY, env.STRIPE_WEBSITE_HOSTING_PRICE_ID);
+}
+
+/** Website Hosting — $10/month recurring (STRIPE_WEBSITE_HOSTING_PRICE_ID). */
+export async function createWebsiteHostingCheckout(params: {
+  secretKey: string;
+  priceId: string;
+  customerEmail: string;
+  accountId: string;
+  siteId: string;
+  siteUrl: string;
+}): Promise<{ ok: true; url: string; sessionId: string } | { ok: false; message: string }> {
+  const site = params.siteUrl.replace(/\/+$/, "");
+  const sid = encodeURIComponent(params.siteId);
+  const successUrl = `${site}/account/settings/website.html?checkout=success&site_id=${sid}`;
+  const cancelUrl = `${site}/account/settings/website.html?checkout=cancel&site_id=${sid}`;
+
+  const body = new URLSearchParams();
+  body.set("mode", "subscription");
+  body.set("customer_email", params.customerEmail.trim().toLowerCase());
+  body.set("client_reference_id", params.accountId);
+  body.set("metadata[account_id]", params.accountId);
+  body.set("metadata[product]", "website_hosting");
+  body.set("metadata[site_id]", params.siteId);
+  body.set("metadata[portal]", "website_hosting");
+  body.set("line_items[0][price]", params.priceId.trim());
+  body.set("line_items[0][quantity]", "1");
+  body.set("success_url", successUrl);
+  body.set("cancel_url", cancelUrl);
+  body.set("allow_promotion_codes", "true");
+  body.set("subscription_data[metadata][product]", "website_hosting");
+  body.set("subscription_data[metadata][site_id]", params.siteId);
+  body.set("subscription_data[metadata][account_id]", params.accountId);
+
+  const res = await fetch("https://api.stripe.com/v1/checkout/sessions", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${params.secretKey.trim()}`,
+      "Content-Type": "application/x-www-form-urlencoded",
+    },
+    body,
+  });
+
+  const data = (await res.json()) as { id?: string; url?: string; error?: { message?: string } };
+  if (!res.ok) {
+    const msg = data.error?.message || `Stripe HTTP ${res.status}`;
+    return { ok: false, message: msg };
+  }
+  if (!data.url || !data.id) {
+    return { ok: false, message: "Stripe did not return a checkout URL." };
+  }
+  return { ok: true, url: data.url, sessionId: data.id };
+}
